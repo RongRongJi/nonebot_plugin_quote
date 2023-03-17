@@ -80,7 +80,9 @@ docker pull mmmz/trwebocr:latest
 docker run -itd --rm -p 8089:8089 --name trwebocr mmmz/trwebocr:latest 
 ```
 
-本插件使用的OCR技术来自: https://github.com/alisen39/TrWebOCR，在此特别感谢。
+本插件使用的OCR技术来自<a href="https://github.com/alisen39/TrWebOCR">TrWebOCR</a>，在此特别感谢
+
+
 
 ### 下载
 

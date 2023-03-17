@@ -1,4 +1,4 @@
-from nonebot import on_command, on_keyword, on_startswith
+from nonebot import on_command, on_keyword, on_startswith, get_driver
 from nonebot.rule import to_me
 from nonebot.matcher import Matcher
 from nonebot.adapters import Message
@@ -16,6 +16,7 @@ import sys
 import os
 from .task import offer, query
 from .config import Config
+from nonebot.log import logger
 
 
 plugin_config = Config.parse_obj(get_driver().config)
@@ -31,8 +32,9 @@ try:
 
     with open(plugin_config.inverted_index_path, 'r') as fi:
         inverted_index = json.load(fi)
+    logger.info('nonebot_plugin_quote路径配置成功')
 except Exception as e:
-    print('未配置record/inverted_index,或路径不对,请在config.py中正确配置')
+    logger.warning('未配置record/inverted_index,或路径不对,请在config.py中正确配置')
 
 
  # 语录库
@@ -58,6 +60,9 @@ def img_to_base64(img_path):
 
 @record.got("prompt", prompt="请上传语录(图片形式)")
 async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), msg: Message = Arg("prompt")):
+
+    global inverted_index
+    global record_dict
 
     session_id = event.get_session_id()
     message_id = event.message_id
@@ -93,7 +98,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
         resp['file'] = resp['file'].replace('data/','../')
 
-        inverted_index = offer(groupNum, resp['file'], content, inverted_index, plugin_config.ocr_url)
+        inverted_index = offer(groupNum, resp['file'], img_b64, inverted_index, plugin_config.ocr_url)
 
         if groupNum not in record_dict:
             record_dict[groupNum] = [resp['file']]
@@ -125,6 +130,9 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
+
+    global inverted_index
+    global record_dict
 
     if 'group' in session_id:
 

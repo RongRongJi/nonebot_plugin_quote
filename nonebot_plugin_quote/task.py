@@ -37,7 +37,7 @@ def query(sentence, group_id, inverted_index):
     if group_id not in inverted_index:
         return {'status': -1}
     hash_map = inverted_index[group_id]
-    couont_map = {}
+    count_map = {}
     result_pool = []
     for word in cut_words:
         if word not in hash_map:

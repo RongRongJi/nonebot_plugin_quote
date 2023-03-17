@@ -38,13 +38,13 @@ docker run -itd --rm -p 8089:8089 --name trwebocr mmmz/trwebocr:latest
 | OCR_URL | 否 | 'http://localhost:8089/api/tr-run/' | OCR所需的接口url, 如果你是按照上述命令运行的Docker镜像, 无需额外配置 |
 | RECORD_PATH | 是 | 空字符串 | 必要的json文件路径, 示例'/data/record.json' |
 | INVERTED_INDEX_PATH | 是 | 空字符串 | 必要的json文件路径, 示例'/data/inverted_index.json' |
-| TMP_DIR | 否 | 空字符串 | 临时文件路径 |
+| TMP_DIR | 否 | 空字符串 | 临时文件夹路径, 示例'/data/' |
 
 其中，需要在`RECORD_PATH`和`INVERTED_INDEX_PATH`中手动创建两个json文件，并在其中填入`{}`以确保其能够正确运行
 
 ## 🎉 使用
 
-默认配置下，@机器人加任意文本即可。
+默认配置下，@机器人加指令即可。
 
 
 | 指令 | 需要@ | 范围 | 说明 |

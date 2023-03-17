@@ -5,7 +5,6 @@
 </div>
 
 
-<div align="center">
 
 # nonebot-plugin-quote
 
@@ -34,9 +33,16 @@ _✨ QQ群聊语录库 ✨_
 
 @机器人，发送**语录**指令，机器人将从语录库中随机挑选一条语录发送。
 
+<img src="screenshot/random.jpg" width="40%" />
+
 ### 关键词检索语录
 
 @机器人，发送**语录**+关键词指令，机器人将从语录库中进行查找。若有匹配项，将从匹配项中随机一条发送；若无匹配项，将从整个语录库中随机挑选一条发送。
+
+<img src="screenshot/select.jpg" width="40%" />
+<img src="screenshot/non.jpg" width="40%" />
+
+### 详细命令
 
 默认配置下，@机器人加指令即可。
 
@@ -62,6 +68,14 @@ docker pull mmmz/trwebocr:latest
 docker run -itd --rm -p 8089:8089 --name trwebocr mmmz/trwebocr:latest 
 ```
 
+### 下载
+
+1. 通过包管理器安装
+
+```
+pip install nonebot-plugin-quote -U
+```
+
 ## ⚙️ 配置
 
 在 nonebot2 项目的 `.env` 文件中添加下表中的必填配置
@@ -76,3 +90,18 @@ docker run -itd --rm -p 8089:8089 --name trwebocr mmmz/trwebocr:latest
 
 其中，需要在`RECORD_PATH`和`INVERTED_INDEX_PATH`中手动创建两个json文件，并在其中填入`{}`以确保其能够正确运行
 
+随后，在项目的`pyproject.tmol`或`bot.py`中加上如下代码，加载插件（根据版本而定）
+
+`pyproject.tmol`中添加
+
+```
+plugins = ["nonebot_plugin_quote"]
+```
+
+或
+
+`bot.py`中添加
+
+```
+nonebot.load_plugin('nonebot_plugin_quote')
+```

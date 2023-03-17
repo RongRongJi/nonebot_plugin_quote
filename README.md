@@ -139,6 +139,6 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ## 🎉 鸣谢
 
-- [NoneBot2](https://github.com/nonebot/nonebot2)：HarukaBot 使用的开发框架。
+- [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。
 - [go-cqhttp](https://github.com/Mrs4s/go-cqhttp)：稳定完善的 CQHTTP 实现。
 - [TrWebOCR](https://github.com/alisen39/TrWebOCR)：轻量又便捷的OCR镜像方案。

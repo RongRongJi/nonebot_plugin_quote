@@ -39,20 +39,20 @@ _✨ QQ群聊 语录库 ✨_
 
 以图片的形式发送聊天语录，即可将语录上传至语录库中。
 
-<img src="screenshot/upload.jpg" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/upload.jpg" width="40%" />
 
 ### 随机发送语录
 
 @机器人，发送**语录**指令，机器人将从语录库中随机挑选一条语录发送。
 
-<img src="screenshot/random.jpg" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/random.jpg" width="40%" />
 
 ### 关键词检索语录
 
 @机器人，发送**语录**+关键词指令，机器人将从语录库中进行查找。若有匹配项，将从匹配项中随机一条发送；若无匹配项，将从整个语录库中随机挑选一条发送。
 
-<img src="screenshot/select.jpg" width="40%" />
-<img src="screenshot/non.jpg" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/select.jpg" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/non.jpg" width="40%" />
 
 ### 详细命令
 
@@ -112,7 +112,7 @@ git clone https://github.com/RongRongJi/nonebot_plugin_quote.git
 
 其中，需要在`RECORD_PATH`和`INVERTED_INDEX_PATH`中手动创建两个json文件，并在其中填入`{}`以确保其能够正确运行，如下图所示：
 
-<img src="screenshot/data.jpg" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/data.jpg" width="40%" />
 
 随后，在项目的`pyproject.toml`或`bot.py`中加上如下代码，加载插件（根据版本而定）
 

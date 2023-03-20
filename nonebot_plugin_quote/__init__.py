@@ -3,18 +3,17 @@ from nonebot.rule import to_me
 from nonebot.matcher import Matcher
 from nonebot.adapters import Message
 from nonebot.params import Arg, ArgPlainText, CommandArg, Matcher
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, GroupMessageEvent, exception
 from nonebot.typing import T_State  
 import nonebot
 import re
 import json
 import base64
-import requests
 import random
 import subprocess
 import sys
 import os
-from .task import offer, query
+from .task import offer, query, delete
 from .config import Config
 from nonebot.log import logger
 
@@ -52,12 +51,6 @@ async def _(event: MessageEvent, args: Message = CommandArg()):
         record.set_arg("prompt", message=args)
 
 
-def img_to_base64(img_path):
-    with open(img_path, 'rb')as read:
-        b64 = base64.b64encode(read.read())
-    return b64
-
-
 @record.got("prompt", prompt="请上传语录(图片形式)")
 async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), msg: Message = Arg("prompt")):
 
@@ -80,17 +73,15 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
     resp =  await bot.call_api('get_image',  **{'file':files[0]})
 
-    # 下载图片
-    url_model = r"\[CQ:image,file=[\S]*,subType=[\S]*,url=(.*?)\]"
-    url = re.findall(url_model, str(msg))[0]
-    path = plugin_config.tmp_dir + files[0] + '.jpg'
-    with open(path, 'wb') as f:
-        img = requests.get(url).content
-        f.write(img)
-    # 转base64
-    img_b64 = img_to_base64(path)
-    # 删除图片
-    os.remove(path)
+    # OCR分词
+    try:
+        ocr = await bot.ocr_image(image=files[0])
+        ocr_content = ''
+        for text in ocr['texts']:
+            ocr_content += text['text']
+    except exception.ActionFailed:
+        ocr_content = ''
+
 
     if 'group' in session_id:
         tmpList = session_id.split('_')
@@ -98,7 +89,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
         resp['file'] = resp['file'].replace('data/','../')
 
-        inverted_index = offer(groupNum, resp['file'], img_b64, inverted_index, plugin_config.ocr_url)
+        inverted_index = offer(groupNum, resp['file'], ocr_content, inverted_index)
 
         if groupNum not in record_dict:
             record_dict[groupNum] = [resp['file']]
@@ -191,3 +182,80 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
         })
 
     await record_help.finish()
+
+
+delete_record = on_command('删除', aliases={'delete'}, rule=to_me())
+
+@delete_record.handle()
+async def delete_record_handle(bot: Bot, event: Event, state: T_State):
+
+    global inverted_index
+    global record_dict
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+
+    if 'group' not in session_id:
+        await delete_record.finish()
+    
+    groupNum = session_id.split('_')[1]
+    if groupNum not in plugin_config.quote_superuser or user_id not in plugin_config.quote_superuser[groupNum]:  
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+'] 非常抱歉, 您没有删除权限TUT'
+        })
+        await delete_record.finish()
+
+    raw_message = str(event)
+
+    errMsg = '请回复需要删除的语录, 并输入删除指令'
+
+    rt = r"\[reply:id=(.*?)]"
+    ids = re.findall(rt, str(raw_message))
+
+    if len(ids) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await delete_record.finish()
+
+    resp = await bot.get_msg(message_id=ids[0])
+
+    img_msg = str(resp['message'])
+
+    print(img_msg)
+
+    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
+    imgs = re.findall(rt, img_msg)
+
+    if len(imgs) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await delete_record.finish()
+
+    # 获取文件名
+    resp =  await bot.call_api('get_image',  **{'file':imgs[0]})
+    resp['file'] = resp['file'].replace('data/','../')
+    
+    # 搜索
+    is_Delete, record_dict, inverted_index = delete(resp['file'], groupNum, record_dict, inverted_index)
+
+    if is_Delete:
+        with open(plugin_config.record_path, 'w') as f:
+            json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
+        with open(plugin_config.inverted_index_path, 'w') as fc:
+            json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+        msg = '删除成功'
+    else:
+        msg = '该图不在语录库中'
+
+
+    await bot.call_api('send_group_msg', **{
+        'group_id':int(groupNum),
+        'message': '[CQ:at,qq='+user_id+']' + msg
+    })
+
+    await delete_record.finish()

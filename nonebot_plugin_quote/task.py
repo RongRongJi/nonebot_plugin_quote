@@ -1,18 +1,11 @@
 import json
 import jieba
-import requests
 import os
 import random
 
 
 # 向语录库添加新的图片
-def offer(group_id, img_file, content, inverted_index, ocr_url):
-    # ocr提取文字
-    res = requests.post(url=ocr_url, data={'img': content})
-    raw_data = res.json()['data']['raw_out']
-    content = ''
-    for raw in raw_data:
-        content += raw[1]
+def offer(group_id, img_file, content, inverted_index):
     # 分词
     cut_words = jieba.lcut_for_search(content)
     cut_words = list(set(cut_words))
@@ -54,3 +47,29 @@ def query(sentence, group_id, inverted_index):
         return {'status': 2}
     idx = random.randint(0, len(result_pool)-1)
     return {'status': 1, 'msg': result_pool[idx]}
+
+
+# 删除内容
+def delete(img_name, group_id, record, inverted_index):
+    check = False
+    keys = list(inverted_index[group_id].keys())
+    for key in keys:
+        check = _remove(inverted_index[group_id][key], img_name) or check
+        if len(inverted_index[group_id][key]) == 0:
+            del inverted_index[group_id][key]
+    
+    check = _remove(record[group_id], img_name) or check
+    if len(record[group_id]) == 0:
+        del record[group_id]
+
+    return check, record, inverted_index
+
+
+def _remove(arr, ele):
+    try:
+        arr.remove(ele)
+        return True
+    except ValueError:
+        return False
+
+

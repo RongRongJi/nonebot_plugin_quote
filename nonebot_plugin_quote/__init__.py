@@ -13,7 +13,7 @@ import random
 import subprocess
 import sys
 import os
-from .task import offer, query, delete
+from .task import offer, query, delete, handle_ocr_text
 from .config import Config
 from nonebot.log import logger
 
@@ -76,9 +76,8 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
     # OCR分词
     try:
         ocr = await bot.ocr_image(image=files[0])
-        ocr_content = ''
-        for text in ocr['texts']:
-            ocr_content += text['text']
+
+        ocr_content = handle_ocr_text(ocr['texts'])
     except exception.ActionFailed:
         ocr_content = ''
 
@@ -237,6 +236,11 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
         })
         await delete_record.finish()
 
+    # 获取文件名
+    # resp =  await bot.call_api('get_image',  **{'file':imgs[0]})
+    # resp['file'] = resp['file'].replace('data/','../')
+
+    # print(resp['file'])
     
     # 搜索
     is_Delete, record_dict, inverted_index = delete(imgs[0], groupNum, record_dict, inverted_index)

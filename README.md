@@ -29,8 +29,8 @@ _✨ QQ群聊 语录库 ✨_
 
 - [x] 上传聊天截图
 - [x] 随机投放聊天语录
-- [x] 根据关键词投放聊天语录        _(2023.3.20更新后无需额外安装Docker v0.2.0)_
-- [x] 支持白名单内用户删除语录      _(2023.3.20更新 v0.2.0)_
+- [x] 根据关键词投放聊天语录 
+- [x] 支持白名单内用户删除语录
 
 
 ## 🎉 使用
@@ -106,9 +106,11 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| RECORD_PATH | 是 | 空字符串 | 必要的json文件路径, 示例'/data/record.json' |
-| INVERTED_INDEX_PATH | 是 | 空字符串 | 必要的json文件路径, 示例'/data/inverted_index.json' |
-| QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典 |
+| RECORD_PATH | 是 | 空字符串 | 必要的json文件路径, 示例"/data/record.json" |
+| INVERTED_INDEX_PATH | 是 | 空字符串 | 必要的json文件路径, 示例"/data/inverted_index.json" |
+| QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
+| GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录) |
+
 
 其中，需要在`RECORD_PATH`和`INVERTED_INDEX_PATH`中手动创建两个json文件，并在其中填入`{}`以确保其能够正确运行，如下图所示：
 
@@ -119,6 +121,28 @@ nb plugin install nonebot-plugin-quote
 ```json
 {"群号1":["语录管理员qq号","语录管理员qq号"],"群号2":["语录管理员qq号"]}
 ```
+
+`GLOBAL_SUPERUSER`的示例如下:
+
+```json
+["全局管理员qq号"]
+```
+
+**完整的`.env`配置可以参考以下内容**
+
+```
+ # linux环境下路径
+RECORD_PATH=/home/your_name/your_path/record.json      
+INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json   
+
+# Windows环境下路径
+RECORD_PATH=D:\your_path\record.json       
+INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
+
+QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
+GLOBAL_SUPERUSER=["6666666"]
+```
+
 
 随后，在项目的`pyproject.toml`或`bot.py`中加上如下代码，加载插件（根据版本而定）
 
@@ -151,6 +175,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 删除了对Docker OCR的依赖，现在无需使用Docker，直接安装插件运行即可
 - 增加了删除语录功能，只有在白名单中的用户拥有删除权限
 - 增加了部分gif的OCR能力，但目前并不准确
+
+### v0.2.1 (2023/3/21)
+
+- 增加了全局管理员的设置，全局管理员拥有删除每个群语录库的权限
 
 
 ## 🎉 鸣谢

@@ -52,17 +52,20 @@ def query(sentence, group_id, inverted_index):
 # 删除内容
 def delete(img_name, group_id, record, inverted_index):
     check = False
-    keys = list(inverted_index[group_id].keys())
-    for key in keys:
-        check = _remove(inverted_index[group_id][key], img_name) or check
-        if len(inverted_index[group_id][key]) == 0:
-            del inverted_index[group_id][key]
-    
-    check = _remove(record[group_id], img_name) or check
-    if len(record[group_id]) == 0:
-        del record[group_id]
+    try:
+        keys = list(inverted_index[group_id].keys())
+        for key in keys:
+            check = _remove(inverted_index[group_id][key], img_name) or check
+            if len(inverted_index[group_id][key]) == 0:
+                del inverted_index[group_id][key]
+        
+        check = _remove(record[group_id], img_name) or check
+        if len(record[group_id]) == 0:
+            del record[group_id]
 
-    return check, record, inverted_index
+        return check, record, inverted_index
+    except KeyError:
+        return check, record, inverted_index
 
 
 def _remove(arr, ele):

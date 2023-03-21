@@ -199,12 +199,13 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
         await delete_record.finish()
     
     groupNum = session_id.split('_')[1]
-    if groupNum not in plugin_config.quote_superuser or user_id not in plugin_config.quote_superuser[groupNum]:  
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+'] 非常抱歉, 您没有删除权限TUT'
-        })
-        await delete_record.finish()
+    if user_id not in plugin_config.global_superuser:
+        if groupNum not in plugin_config.quote_superuser or user_id not in plugin_config.quote_superuser[groupNum]:  
+            await bot.call_api('send_group_msg', **{
+                'group_id':int(groupNum),
+                'message': '[CQ:at,qq='+user_id+'] 非常抱歉, 您没有删除权限TUT'
+            })
+            await delete_record.finish()
 
     raw_message = str(event)
 
@@ -224,7 +225,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
     img_msg = str(resp['message'])
 
-    print(img_msg)
+    # print(img_msg)
 
     rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
     imgs = re.findall(rt, img_msg)

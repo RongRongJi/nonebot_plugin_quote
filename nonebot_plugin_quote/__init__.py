@@ -225,7 +225,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
     img_msg = str(resp['message'])
 
-    # print(img_msg)
+    print(img_msg)
 
     rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
     imgs = re.findall(rt, img_msg)
@@ -237,12 +237,9 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
         })
         await delete_record.finish()
 
-    # 获取文件名
-    resp =  await bot.call_api('get_image',  **{'file':imgs[0]})
-    resp['file'] = resp['file'].replace('data/','../')
     
     # 搜索
-    is_Delete, record_dict, inverted_index = delete(resp['file'], groupNum, record_dict, inverted_index)
+    is_Delete, record_dict, inverted_index = delete(imgs[0], groupNum, record_dict, inverted_index)
 
     if is_Delete:
         with open(plugin_config.record_path, 'w') as f:

@@ -69,10 +69,14 @@ def delete(img_name, group_id, record, inverted_index):
 
 
 def _remove(arr, ele):
-    try:
-        arr.remove(ele)
-        return True
-    except ValueError:
-        return False
+    old_len = len(arr)
+    for name in arr:
+        file_name = os.path.basename(name)
+        if file_name.startswith(ele):
+            arr.remove(name)
+            break
+    
+    return len(arr) < old_len
+
 
 

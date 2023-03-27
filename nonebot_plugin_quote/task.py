@@ -5,13 +5,15 @@ import random
 
 
 # 向语录库添加新的图片
-def offer(group_id, img_file, content, inverted_index):
+def offer(group_id, img_file, content, inverted_index, forward_index):
     # 分词
     cut_words = cut_sentence(content)
     # 群号是否在表中
     if group_id not in inverted_index:
         inverted_index[group_id] = {}
+        forward_index[group_id] = {}
         
+    forward_index[group_id][img_file] = set(cut_words)
     # 分词是否在群的hashmap里
     for word in cut_words:
         if word not in inverted_index[group_id]:
@@ -19,13 +21,16 @@ def offer(group_id, img_file, content, inverted_index):
         else:
             inverted_index[group_id][word].append(img_file)
     
-    return inverted_index
+    return inverted_index, forward_index
 
 
 # 倒排索引表查询图片
 def query(sentence, group_id, inverted_index):
-    cut_words = jieba.lcut_for_search(sentence)
-    cut_words = list(set(cut_words))
+    if sentence.startswith('#'):
+        cut_words = [sentence[1:]]
+    else:
+        cut_words = jieba.lcut_for_search(sentence)
+        cut_words = list(set(cut_words))
     if group_id not in inverted_index:
         return {'status': -1}
     hash_map = inverted_index[group_id]
@@ -49,7 +54,7 @@ def query(sentence, group_id, inverted_index):
 
 
 # 删除内容
-def delete(img_name, group_id, record, inverted_index):
+def delete(img_name, group_id, record, inverted_index, forward_index):
     check = False
     try:
         keys = list(inverted_index[group_id].keys())
@@ -62,9 +67,15 @@ def delete(img_name, group_id, record, inverted_index):
         if len(record[group_id]) == 0:
             del record[group_id]
 
-        return check, record, inverted_index
+        for key in forward_index[group_id].keys():
+            file_name = os.path.basename(key)
+            if file_name.startswith(img_name):
+                del forward_index[group_id][key]
+                break
+
+        return check, record, inverted_index, forward_index
     except KeyError:
-        return check, record, inverted_index
+        return check, record, inverted_index, forward_index
 
 
 def _remove(arr, ele):
@@ -117,3 +128,62 @@ def cut_sentence(sentence):
     new_words = [word for word in cut_words if word not in remove_set]
 
     return new_words
+
+
+# 倒排索引 转 正向索引
+def inverted2forward(inverted_index):
+    forward_index = {}
+    for qq_group in inverted_index.keys():
+        forward_index[qq_group] = {}
+        for word, imgs in inverted_index[qq_group].items():
+            for img in imgs:
+                forward_index[qq_group].setdefault(img, set()).add(word)
+    return forward_index
+
+
+# 输出所有tag
+def findAlltag(img_name, forward_index, group_id):
+    for key, value in forward_index[group_id].items():
+        file_name = os.path.basename(key)
+        if file_name.startswith(img_name):
+            return value
+
+
+# 添加tag
+def addTag(tags, img_name, group_id, forward_index, inverted_index):
+    # 是否存在
+    path = None
+    for key in forward_index[group_id].keys():
+        file_name = os.path.basename(key)
+        if file_name.startswith(img_name):
+            path = key
+            for tag in tags:
+                forward_index[group_id][key].add(tag)
+            break
+    if path is None:
+        return None, forward_index, inverted_index
+    for tag in tags:
+        inverted_index[group_id].setdefault(tag, []).append(path)
+    return path, forward_index, inverted_index
+
+
+# 删除tag
+def delTag(tags, img_name, group_id, forward_index, inverted_index):
+    path = None
+    for key in forward_index[group_id].keys():
+        file_name = os.path.basename(key)
+        if file_name.startswith(img_name):
+            path = key
+            for tag in tags:
+                forward_index[group_id][key].discard(tag)
+            break
+    if path is None:
+        return None, forward_index, inverted_index
+    keys = list(inverted_index[group_id].keys())
+    for tag in tags:
+        if tag in keys and path in inverted_index[group_id][tag]:
+            inverted_index[group_id][tag].remove(path)
+            if len(inverted_index[group_id][tag]) == 0:
+                del inverted_index[group_id][tag]
+    return path, forward_index, inverted_index
+            

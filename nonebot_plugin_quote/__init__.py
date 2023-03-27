@@ -1,4 +1,4 @@
-from nonebot import on_command, on_keyword, on_startswith, get_driver
+from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
 from nonebot.matcher import Matcher
 from nonebot.adapters import Message
@@ -13,7 +13,7 @@ import random
 import subprocess
 import sys
 import os
-from .task import offer, query, delete, handle_ocr_text
+from .task import offer, query, delete, handle_ocr_text, inverted2forward, findAlltag, addTag, delTag
 from .config import Config
 from nonebot.log import logger
 
@@ -41,6 +41,9 @@ except Exception as e:
     logger.warning('已创建json文件')
 
 
+forward_index = inverted2forward(inverted_index)
+
+
  # 语录库
 record = on_command("开始上传", aliases={"上传", '上传开始'}, priority=10, block=True, rule=to_me())
 end_conversation = ['stop', '结束', '上传截图', '结束上传']
@@ -61,6 +64,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
     global inverted_index
     global record_dict
+    global forward_index
 
     session_id = event.get_session_id()
     message_id = event.message_id
@@ -93,7 +97,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
         resp['file'] = resp['file'].replace('data/','../')
 
-        inverted_index = offer(groupNum, resp['file'], ocr_content, inverted_index)
+        inverted_index, forward_index = offer(groupNum, resp['file'], ocr_content, inverted_index, forward_index)
 
         if groupNum not in record_dict:
             record_dict[groupNum] = [resp['file']]
@@ -195,6 +199,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
     global inverted_index
     global record_dict
+    global forward_index
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
@@ -229,8 +234,6 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
     img_msg = str(resp['message'])
 
-    print(img_msg)
-
     rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
     imgs = re.findall(rt, img_msg)
 
@@ -240,15 +243,9 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
             'message': '[CQ:at,qq='+user_id+']' + errMsg
         })
         await delete_record.finish()
-
-    # 获取文件名
-    # resp =  await bot.call_api('get_image',  **{'file':imgs[0]})
-    # resp['file'] = resp['file'].replace('data/','../')
-
-    # print(resp['file'])
     
     # 搜索
-    is_Delete, record_dict, inverted_index = delete(imgs[0], groupNum, record_dict, inverted_index)
+    is_Delete, record_dict, inverted_index, forward_index = delete(imgs[0], groupNum, record_dict, inverted_index, forward_index)
 
     if is_Delete:
         with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
@@ -266,3 +263,190 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     })
 
     await delete_record.finish()
+
+
+
+alltag = on_command('alltag', aliases={'标签','所有标签','展示标签','tag','Tag'}, rule=to_me())
+
+@alltag.handle()
+async def alltag_handle(bot: Bot, event: Event, state: T_State):
+
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+
+    if 'group' not in session_id:
+        await alltag.finish()
+
+    groupNum = session_id.split('_')[1]
+    raw_message = str(event)
+
+    errMsg = '请回复需要指定语录'
+
+    rt = r"\[reply:id=(.*?)]"
+    ids = re.findall(rt, str(raw_message))
+
+    if len(ids) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await alltag.finish()
+
+    resp = await bot.get_msg(message_id=ids[0])
+
+    img_msg = str(resp['message'])
+
+    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
+    imgs = re.findall(rt, img_msg)
+
+    if len(imgs) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await alltag.finish()
+
+    tags = findAlltag(imgs[0], forward_index, groupNum)
+    if tags is None:
+        msg = '该语录不存在'
+    else:
+        msg = '该语录的所有Tag为: '
+        for tag in tags:
+            msg += tag + ' '
+
+    await bot.call_api('send_group_msg', **{
+        'group_id':int(groupNum),
+        'message': '[CQ:at,qq='+user_id+']' + msg
+    })
+
+    await alltag.finish()
+
+
+addtag = on_regex(pattern="^addtag\ ", rule=to_me())
+
+@addtag.handle()
+async def addtag_handle(bot: Bot, event: Event, state: T_State):
+
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+    tags = str(event.get_message()).replace('addtag', '').strip().split(' ')
+
+    if 'group' not in session_id:
+        await addtag.finish()
+
+    groupNum = session_id.split('_')[1]
+    raw_message = str(event)
+
+    errMsg = '请回复需要指定语录'
+
+    rt = r"\[reply:id=(.*?)]"
+    ids = re.findall(rt, str(raw_message))
+
+    if len(ids) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await addtag.finish()
+
+    resp = await bot.get_msg(message_id=ids[0])
+
+    img_msg = str(resp['message'])
+
+    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
+    imgs = re.findall(rt, img_msg)
+
+    if len(imgs) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await addtag.finish()
+
+
+    flag, forward_index, inverted_index = addTag(tags, imgs[0], groupNum, forward_index, inverted_index)
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+        json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+
+    if flag is None:
+        msg = '该语录不存在'
+    else:
+        msg = '已为该语录添加上{}标签'.format(tags)
+
+    await bot.call_api('send_group_msg', **{
+        'group_id':int(groupNum),
+        'message': '[CQ:at,qq='+user_id+']' + msg
+    })
+
+    await addtag.finish()
+
+
+deltag = on_regex(pattern="^deltag\ ", rule=to_me())
+
+@deltag.handle()
+async def deltag_handle(bot: Bot, event: Event, state: T_State):
+
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+    tags = str(event.get_message()).replace('deltag', '').strip().split(' ')
+
+    if 'group' not in session_id:
+        await addtag.finish()
+
+    groupNum = session_id.split('_')[1]
+    raw_message = str(event)
+
+    errMsg = '请回复需要指定语录'
+
+    rt = r"\[reply:id=(.*?)]"
+    ids = re.findall(rt, str(raw_message))
+
+    if len(ids) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await deltag.finish()
+
+    resp = await bot.get_msg(message_id=ids[0])
+
+    img_msg = str(resp['message'])
+
+    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
+    imgs = re.findall(rt, img_msg)
+
+    if len(imgs) == 0:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await deltag.finish()
+
+
+    flag, forward_index, inverted_index = delTag(tags, imgs[0], groupNum, forward_index, inverted_index)
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+        json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+
+    if flag is None:
+        msg = '该语录不存在'
+    else:
+        msg = '已移除该语录的{}标签'.format(tags)
+
+    await bot.call_api('send_group_msg', **{
+        'group_id':int(groupNum),
+        'message': '[CQ:at,qq='+user_id+']' + msg
+    })
+
+    await deltag.finish()

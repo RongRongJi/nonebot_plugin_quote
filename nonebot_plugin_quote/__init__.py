@@ -26,14 +26,19 @@ inverted_index = {}
 
 # 首次运行时导入表
 try:
-    with open(plugin_config.record_path, 'r') as fr:
+    with open(plugin_config.record_path, 'r', encoding='UTF-8') as fr:
         record_dict = json.load(fr)
 
-    with open(plugin_config.inverted_index_path, 'r') as fi:
+    with open(plugin_config.inverted_index_path, 'r', encoding='UTF-8') as fi:
         inverted_index = json.load(fi)
     logger.info('nonebot_plugin_quote路径配置成功')
 except Exception as e:
-    logger.warning('未配置record/inverted_index,或路径不对,请在config.py中正确配置')
+    with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+        json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
+
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+        json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+    logger.warning('已创建json文件')
 
 
  # 语录库
@@ -97,10 +102,10 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
                 record_dict[groupNum].append(resp['file'])
 
 
-        with open(plugin_config.record_path, 'w') as f:
+        with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
             json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
 
-        with open(plugin_config.inverted_index_path, 'w') as fc:
+        with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
             json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
 
     # await record.reject_arg('prompt', MessageSegment.reply(message_id) + '上传成功')
@@ -246,9 +251,9 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     is_Delete, record_dict, inverted_index = delete(imgs[0], groupNum, record_dict, inverted_index)
 
     if is_Delete:
-        with open(plugin_config.record_path, 'w') as f:
+        with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
             json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
-        with open(plugin_config.inverted_index_path, 'w') as fc:
+        with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
             json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
         msg = '删除成功'
     else:

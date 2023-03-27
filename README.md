@@ -106,15 +106,14 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| RECORD_PATH | 是 | 空字符串 | 必要的json文件路径, 示例"/data/record.json" |
-| INVERTED_INDEX_PATH | 是 | 空字符串 | 必要的json文件路径, 示例"/data/inverted_index.json" |
+| RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
+| INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
 | GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录) |
 
 
-其中，需要在`RECORD_PATH`和`INVERTED_INDEX_PATH`中手动创建两个json文件，并在其中填入`{}`以确保其能够正确运行，如下图所示：
+`RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建了两个json文件。
 
-<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/data.jpg" width="40%" />
 
 `QUOTE_SUPERUSER`的示例如下:
 

@@ -215,6 +215,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 - 适配了一个不同版本reply格式不同的问题
 
+### v0.3.2 (2023/3/28)
+
+- 增加了是否需要at机器人的选项
+
 ## 🎉 鸣谢
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。

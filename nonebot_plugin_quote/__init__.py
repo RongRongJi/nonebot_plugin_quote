@@ -20,6 +20,10 @@ from nonebot.log import logger
 
 plugin_config = Config.parse_obj(get_driver().config)
 
+need_at = {}
+if plugin_config.quote_needat:
+    need_at['rule'] = to_me()
+
 
 record_dict = {}
 inverted_index = {}
@@ -98,7 +102,6 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
         resp['file'] = resp['file'].replace('data/','../')
 
         inverted_index, forward_index = offer(groupNum, resp['file'], ocr_content, inverted_index, forward_index)
-        print(forward_index[groupNum])
 
         if groupNum not in record_dict:
             record_dict[groupNum] = [resp['file']]
@@ -121,8 +124,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
     await record.finish('上传会话已结束')
 
 
-
-record_pool = on_startswith('语录', priority=2, block=True, rule=to_me())
+record_pool = on_startswith('语录', priority=2, block=True, **need_at)
 
 
 @record_pool.handle()
@@ -155,9 +157,12 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
             if ret['status'] == -1:
                 msg = '当前无语录库'
             elif ret['status'] == 2:
-                length = len(record_dict[groupNum])
-                idx = random.randint(0, length-1)
-                msg = '当前查询无结果, 为您随机发送。\n[CQ:image,file={}]'.format(record_dict[groupNum][idx])
+                if groupNum not in record_dict:
+                    msg = '当前无语录库'
+                else:
+                    length = len(record_dict[groupNum])
+                    idx = random.randint(0, length-1)
+                    msg = '当前查询无结果, 为您随机发送。\n[CQ:image,file={}]'.format(record_dict[groupNum][idx])
             elif ret['status'] == 1:
                 msg = '[CQ:image,file={}]'.format(ret['msg'])
             else:
@@ -178,8 +183,11 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
+    raw_msg = str(event.get_message())
+    if '怎么用' not in raw_msg and '如何' not in raw_msg:
+        await record_help.finish()
 
-    msg = '''您可以通过at我+上传, 开启上传语录通道; 再发送图片上传语录。您也可以通过at我+语录, 我将随机返回一条语录。'''
+    msg = '''您可以通过at我+上传, 开启上传语录通道; 再发送图片上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。'''
 
     if 'group' in session_id:
         tmpList = session_id.split('_')
@@ -193,7 +201,7 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
     await record_help.finish()
 
 
-delete_record = on_command('删除', aliases={'delete'}, rule=to_me())
+delete_record = on_command('删除', aliases={'delete'}, **need_at)
 
 @delete_record.handle()
 async def delete_record_handle(bot: Bot, event: Event, state: T_State):
@@ -236,8 +244,6 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
     img_msg = str(resp['message'])
 
-    print(img_msg)
-
     rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
     imgs = re.findall(rt, img_msg)
 
@@ -250,7 +256,6 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     
     # 搜索
     is_Delete, record_dict, inverted_index, forward_index = delete(imgs[0], groupNum, record_dict, inverted_index, forward_index)
-    print(forward_index[groupNum])
 
     if is_Delete:
         with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
@@ -271,7 +276,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
 
 
-alltag = on_command('alltag', aliases={'标签','所有标签','展示标签','tag','Tag'}, rule=to_me())
+alltag = on_command('alltag', aliases={'标签','所有标签','展示标签','tag','Tag'}, **need_at)
 
 @alltag.handle()
 async def alltag_handle(bot: Bot, event: Event, state: T_State):
@@ -332,7 +337,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
     await alltag.finish()
 
 
-addtag = on_regex(pattern="^addtag\ ", rule=to_me())
+addtag = on_regex(pattern="^addtag\ ", **need_at)
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -344,7 +349,6 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
     tags = str(event.get_message()).replace('addtag', '').strip().split(' ')
-    print(tags)
 
     if 'group' not in session_id:
         await addtag.finish()
@@ -397,7 +401,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish()
 
 
-deltag = on_regex(pattern="^deltag\ ", rule=to_me())
+deltag = on_regex(pattern="^deltag\ ", **need_at)
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):
@@ -409,7 +413,6 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
     tags = str(event.get_message()).replace('deltag', '').strip().split(' ')
-    print(tags)
 
     if 'group' not in session_id:
         await addtag.finish()

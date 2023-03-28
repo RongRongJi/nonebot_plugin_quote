@@ -129,6 +129,7 @@ nb plugin install nonebot-plugin-quote
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
 | GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录) |
+| QUOTE_NEEDAT | 否 | True | 是否需要at机器人 |
 
 
 `RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建了两个json文件。
@@ -159,6 +160,7 @@ INVERTED_INDEX_PATH=D:\your_path\inverted_index.json
 
 QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
 GLOBAL_SUPERUSER=["6666666"]
+QUOTE_NEEDAT=True
 ```
 
 

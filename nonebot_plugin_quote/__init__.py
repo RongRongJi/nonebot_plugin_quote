@@ -98,6 +98,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
         resp['file'] = resp['file'].replace('data/','../')
 
         inverted_index, forward_index = offer(groupNum, resp['file'], ocr_content, inverted_index, forward_index)
+        print(forward_index[groupNum])
 
         if groupNum not in record_dict:
             record_dict[groupNum] = [resp['file']]
@@ -230,9 +231,12 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
         })
         await delete_record.finish()
 
-    resp = await bot.get_msg(message_id=ids[0])
+    rlyid = ids[0].split(",")[0]
+    resp = await bot.get_msg(message_id=rlyid)
 
     img_msg = str(resp['message'])
+
+    print(img_msg)
 
     rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
     imgs = re.findall(rt, img_msg)
@@ -246,6 +250,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     
     # 搜索
     is_Delete, record_dict, inverted_index, forward_index = delete(imgs[0], groupNum, record_dict, inverted_index, forward_index)
+    print(forward_index[groupNum])
 
     if is_Delete:
         with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
@@ -296,7 +301,8 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
         })
         await alltag.finish()
 
-    resp = await bot.get_msg(message_id=ids[0])
+    rlyid = ids[0].split(",")[0]
+    resp = await bot.get_msg(message_id=rlyid)
 
     img_msg = str(resp['message'])
 
@@ -338,6 +344,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
     tags = str(event.get_message()).replace('addtag', '').strip().split(' ')
+    print(tags)
 
     if 'group' not in session_id:
         await addtag.finish()
@@ -357,7 +364,8 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
         })
         await addtag.finish()
 
-    resp = await bot.get_msg(message_id=ids[0])
+    rlyid = ids[0].split(",")[0]
+    resp = await bot.get_msg(message_id=rlyid)
 
     img_msg = str(resp['message'])
 
@@ -401,6 +409,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
     tags = str(event.get_message()).replace('deltag', '').strip().split(' ')
+    print(tags)
 
     if 'group' not in session_id:
         await addtag.finish()
@@ -420,7 +429,8 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
         })
         await deltag.finish()
 
-    resp = await bot.get_msg(message_id=ids[0])
+    rlyid = ids[0].split(",")[0]
+    resp = await bot.get_msg(message_id=rlyid)
 
     img_msg = str(resp['message'])
 

@@ -209,6 +209,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 增加了初始文件的默认路径，不再需要用户手动创建文件
 - IO统一为UTF-8
 
+### v0.3.1 (2023/3/28)
+
+- 适配了一个不同版本reply格式不同的问题
+
 ## 🎉 鸣谢
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。

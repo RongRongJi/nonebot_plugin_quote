@@ -46,10 +46,11 @@ except Exception as e:
 
 
 forward_index = inverted2forward(inverted_index)
+# reply_index = {}
 
 
  # 语录库
-record = on_command("开始上传", aliases={"上传", '上传开始'}, priority=10, block=True, rule=to_me())
+record = on_command("{}上传".format(plugin_config.quote_startcmd), priority=10, block=True, rule=to_me())
 end_conversation = ['stop', '结束', '上传截图', '结束上传']
 
 
@@ -124,7 +125,7 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
     await record.finish('上传会话已结束')
 
 
-record_pool = on_startswith('语录', priority=2, block=True, **need_at)
+record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
 
 
 @record_pool.handle()
@@ -139,7 +140,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
     if 'group' in session_id:
 
         search_info = str(event.get_message()).strip()
-        search_info = search_info.replace('语录','').replace(' ','')
+        search_info = search_info.replace('{}语录'.format(plugin_config.quote_startcmd),'').replace(' ','')
 
         tmpList = session_id.split('_')
         groupNum = tmpList[1]
@@ -201,7 +202,7 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
     await record_help.finish()
 
 
-delete_record = on_command('删除', aliases={'delete'}, **need_at)
+delete_record = on_command('{}删除'.format(plugin_config.quote_startcmd), aliases={'delete'}, **need_at)
 
 @delete_record.handle()
 async def delete_record_handle(bot: Bot, event: Event, state: T_State):
@@ -276,7 +277,7 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
 
 
 
-alltag = on_command('alltag', aliases={'标签','所有标签','展示标签','tag','Tag'}, **need_at)
+alltag = on_command('{}alltag'.format(plugin_config.quote_startcmd), aliases={'{}标签'.format(plugin_config.quote_startcmd),'{}tag'.format(plugin_config.quote_startcmd)}, **need_at)
 
 @alltag.handle()
 async def alltag_handle(bot: Bot, event: Event, state: T_State):
@@ -337,7 +338,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
     await alltag.finish()
 
 
-addtag = on_regex(pattern="^addtag\ ", **need_at)
+addtag = on_regex(pattern="^{}addtag\ ".format(plugin_config.quote_startcmd), **need_at)
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -348,7 +349,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
-    tags = str(event.get_message()).replace('addtag', '').strip().split(' ')
+    tags = str(event.get_message()).replace('{}addtag'.format(plugin_config.quote_startcmd), '').strip().split(' ')
 
     if 'group' not in session_id:
         await addtag.finish()
@@ -401,7 +402,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish()
 
 
-deltag = on_regex(pattern="^deltag\ ", **need_at)
+deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):
@@ -412,7 +413,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
-    tags = str(event.get_message()).replace('deltag', '').strip().split(' ')
+    tags = str(event.get_message()).replace('{}deltag'.format(plugin_config.quote_startcmd), '').strip().split(' ')
 
     if 'group' not in session_id:
         await addtag.finish()
@@ -463,3 +464,4 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     })
 
     await deltag.finish()
+

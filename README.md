@@ -32,7 +32,7 @@ _✨ QQ群聊 语录库 ✨_
 - [x] 根据关键词投放聊天语录 
 - [x] 支持白名单内用户删除语录
 - [x] 支持为指定语录增删标签
-- [ ] 回复协议更新使回复语录+指令的功能暂时无法正常工作
+- [x] [批量上传已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch_upload.md)
 
 你的star是对我最好的支持！
 
@@ -45,6 +45,8 @@ _✨ QQ群聊 语录库 ✨_
 以图片的形式发送聊天语录，即可将语录上传至语录库中。
 
 <img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/upload.jpg" width="40%" />
+
+直接回复**结束**，即可终止上传通道。
 
 ### 随机发送语录
 
@@ -222,6 +224,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 - 增加了是否需要at机器人的选项
 - 增加了指令前缀
+
+### v0.3.3 (2023/4/2)
+
+- 增加批量上传语录功能（试验版）
 
 ## 🎉 鸣谢
 

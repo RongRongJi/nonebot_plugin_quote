@@ -14,8 +14,10 @@ import subprocess
 import sys
 import os
 from .task import offer, query, delete, handle_ocr_text, inverted2forward, findAlltag, addTag, delTag
+from .task import copy_images_files
 from .config import Config
 from nonebot.log import logger
+import time
 
 
 plugin_config = Config.parse_obj(get_driver().config)
@@ -465,3 +467,95 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
 
     await deltag.finish()
 
+
+# script_batch = on_command('{}脚本123'.format(plugin_config.quote_startcmd), **need_at)
+script_batch = on_regex(pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at)
+
+@script_batch.handle()
+async def script_batch_handle(bot: Bot, event: Event, state: T_State):
+
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+
+    # 必须是超级管理员群聊
+    if user_id not in plugin_config.global_superuser:
+        await script_batch.finish()
+    if 'group' not in session_id:
+        await script_batch.finish('该功能暂不支持私聊')
+
+    groupNum = session_id.split('_')[1]
+
+    rqqid = r"qqgroup=(.*)\s"
+    ryour_path =  r"your_path=(.*)\s"
+    rgocq_path =  r"gocq_path=(.*)\s"
+    rtags =  r"tags=(.*)"
+
+    raw_msg = str(event.get_message())
+    raw_msg = raw_msg.replace('\r','')
+    group_id = re.findall(rqqid, raw_msg)
+    your_path = re.findall(ryour_path, raw_msg)
+    gocq_path = re.findall(rgocq_path, raw_msg)
+    tags = re.findall(rtags, raw_msg)
+    instruction = '''指令如下:
+batch_upload
+qqgroup=123456
+your_path=/home/xxx/images
+gocq_path=/home/xxx/gocq/data/cache
+tags=aaa bbb ccc'''
+    if len(group_id) == 0 or len(your_path) == 0 or len(gocq_path) == 0:
+        await script_batch.finish(instruction)
+    # 获取图片
+    image_files = copy_images_files(your_path[0], gocq_path[0])
+
+    total_len = len(image_files)
+    idx = 0
+
+    for (imgid, img) in image_files:
+        save_file = '../cache/' + img
+        idx += 1
+        msg_id = await bot.send_msg(group_id=int(groupNum), message='[CQ:image,file={}]'.format(save_file))
+        time.sleep(2)
+        if save_file in forward_index[group_id[0]]:
+            await bot.send_msg(group_id=int(groupNum), message='上述图片已存在')
+            continue
+        try:
+            ocr = await bot.ocr_image(image=imgid)
+            ocr_content = handle_ocr_text(ocr['texts'])
+        except exception.ActionFailed:
+            await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
+            continue
+        
+        time.sleep(1)
+        inverted_index, forward_index = offer(group_id[0], save_file, ocr_content, inverted_index, forward_index)
+        if group_id[0] not in record_dict:
+            record_dict[group_id[0]] = [save_file]
+        else:
+            if save_file not in record_dict[group_id[0]]:
+                record_dict[group_id[0]].append(save_file)
+        
+        if len(tags) != 0:
+            tags = tags[0].strip().split(' ')
+            flag, forward_index, inverted_index = addTag(tags, imgid, group_id[0], forward_index, inverted_index)
+        
+        # 每5张语录持久化一次
+        if idx % 5 == 0:
+            with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+                json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
+
+            with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+                json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+            
+            await bot.send_msg(group_id=int(groupNum), message='当前进度{}/{}'.format(idx, total_len))
+
+    with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+        json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
+
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+        json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
+
+    await bot.send_msg(group_id=int(groupNum), message='批量导入完成')
+    await script_batch.finish()

@@ -2,6 +2,8 @@ import json
 import jieba
 import os
 import random
+import hashlib
+import shutil
 
 
 # 向语录库添加新的图片
@@ -186,4 +188,28 @@ def delTag(tags, img_name, group_id, forward_index, inverted_index):
             if len(inverted_index[group_id][tag]) == 0:
                 del inverted_index[group_id][tag]
     return path, forward_index, inverted_index
-            
+
+
+IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif']
+def copy_images_files(source, destinate):
+    image_files = []
+    for root,_,files in os.walk(source):
+        for filename in files:
+            extension = os.path.splitext(filename)[1].lower()
+            if extension in IMAGE_EXTENSIONS:
+                image_path = os.path.join(root, filename)
+                # 获得md5
+                md5 = get_img_md5(image_path) + '.image'
+                tname = md5 + extension
+                # 复制到目录
+                destination_path = os.path.join(destinate, tname)
+                shutil.copy(image_path, destination_path)
+                image_files.append((md5, tname))
+    return image_files
+
+
+def get_img_md5(img_path):
+    with open(img_path, 'rb') as f:
+        img_data = f.read()
+    md5 = hashlib.md5(img_data).hexdigest()
+    return md5

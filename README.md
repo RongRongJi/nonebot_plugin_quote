@@ -225,7 +225,7 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 增加了是否需要at机器人的选项
 - 增加了指令前缀
 
-### v0.3.3 (2023/4/2)
+### v0.3.4 (2023/4/2)
 
 - 增加批量上传语录功能（试验版）
 

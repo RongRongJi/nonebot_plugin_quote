@@ -519,14 +519,14 @@ tags=aaa bbb ccc'''
         idx += 1
         msg_id = await bot.send_msg(group_id=int(groupNum), message='[CQ:image,file={}]'.format(save_file))
         time.sleep(2)
-        if save_file in forward_index[group_id[0]]:
+        if group_id[0] in forward_index and save_file in forward_index[group_id[0]]:
             await bot.send_msg(group_id=int(groupNum), message='上述图片已存在')
             continue
         try:
             ocr = await bot.ocr_image(image=imgid)
             ocr_content = handle_ocr_text(ocr['texts'])
         except exception.ActionFailed:
-            await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
+            await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败, 请单独上传')
             continue
         
         time.sleep(1)

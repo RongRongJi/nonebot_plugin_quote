@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-quote"
-version = "0.3.3"
+version = "0.3.4"
 description = "一款适用于QQ群聊天的语录库插件"
 authors = ["RongRongJi <316315867@qq.com>"]
 license = "MIT"

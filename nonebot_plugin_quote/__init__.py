@@ -13,12 +13,14 @@ import random
 import subprocess
 import sys
 import os
+import shutil
 from .task import offer, query, delete, handle_ocr_text, inverted2forward, findAlltag, addTag, delTag
 from .task import copy_images_files
 from .config import Config
 from nonebot.log import logger
 import time
 
+# v0.3.5
 
 plugin_config = Config.parse_obj(get_driver().config)
 
@@ -48,7 +50,53 @@ except Exception as e:
 
 
 forward_index = inverted2forward(inverted_index)
-# reply_index = {}
+
+
+# 回复信息处理
+async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
+
+    # print(raw_message)
+    if 'reply' not in raw_message:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await listener.finish()
+    
+    # reply之后第一个等号，到数字后第一个非数字
+    idx = raw_message.find('reply')
+    reply_id = ''
+    for i in range(idx, len(raw_message)):
+        if raw_message[i] == '=':
+            idx = i
+            break
+    for i in range(idx+1, len(raw_message)):
+        if raw_message[i] != '-' and not raw_message[i].isdigit():
+            break
+        reply_id += raw_message[i]
+
+    # print(reply_id)
+
+    resp = await bot.get_msg(message_id=reply_id)
+
+    img_msg = str(resp['message'])
+    # print(img_msg)
+
+    if '.image' not in img_msg:
+        await bot.call_api('send_group_msg', **{
+            'group_id':int(groupNum),
+            'message': '[CQ:at,qq='+user_id+']' + errMsg
+        })
+        await listener.finish()
+    
+    idx = img_msg.find('.image')
+    img = '.image'
+    for i in range(0,32):
+        img = img_msg[idx-i-1] + img
+    
+    # print(img)
+    return img
+
 
 
  # 语录库
@@ -231,34 +279,10 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     raw_message = str(event)
 
     errMsg = '请回复需要删除的语录, 并输入删除指令'
-
-    rt = r"\[reply:id=(.*?)]"
-    ids = re.findall(rt, str(raw_message))
-
-    if len(ids) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await delete_record.finish()
-
-    rlyid = ids[0].split(",")[0]
-    resp = await bot.get_msg(message_id=rlyid)
-
-    img_msg = str(resp['message'])
-
-    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
-    imgs = re.findall(rt, img_msg)
-
-    if len(imgs) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await delete_record.finish()
+    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, delete_record)
     
     # 搜索
-    is_Delete, record_dict, inverted_index, forward_index = delete(imgs[0], groupNum, record_dict, inverted_index, forward_index)
+    is_Delete, record_dict, inverted_index, forward_index = delete(imgs, groupNum, record_dict, inverted_index, forward_index)
 
     if is_Delete:
         with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
@@ -298,33 +322,9 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
     raw_message = str(event)
 
     errMsg = '请回复需要指定语录'
+    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, alltag)
 
-    rt = r"\[reply:id=(.*?)]"
-    ids = re.findall(rt, str(raw_message))
-
-    if len(ids) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await alltag.finish()
-
-    rlyid = ids[0].split(",")[0]
-    resp = await bot.get_msg(message_id=rlyid)
-
-    img_msg = str(resp['message'])
-
-    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
-    imgs = re.findall(rt, img_msg)
-
-    if len(imgs) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await alltag.finish()
-
-    tags = findAlltag(imgs[0], forward_index, groupNum)
+    tags = findAlltag(imgs, forward_index, groupNum)
     if tags is None:
         msg = '该语录不存在'
     else:
@@ -360,34 +360,9 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     raw_message = str(event)
 
     errMsg = '请回复需要指定语录'
+    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, addtag)
 
-    rt = r"\[reply:id=(.*?)]"
-    ids = re.findall(rt, str(raw_message))
-
-    if len(ids) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await addtag.finish()
-
-    rlyid = ids[0].split(",")[0]
-    resp = await bot.get_msg(message_id=rlyid)
-
-    img_msg = str(resp['message'])
-
-    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
-    imgs = re.findall(rt, img_msg)
-
-    if len(imgs) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await addtag.finish()
-
-
-    flag, forward_index, inverted_index = addTag(tags, imgs[0], groupNum, forward_index, inverted_index)
+    flag, forward_index, inverted_index = addTag(tags, imgs, groupNum, forward_index, inverted_index)
     with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
         json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
 
@@ -424,34 +399,9 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     raw_message = str(event)
 
     errMsg = '请回复需要指定语录'
+    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, deltag)
 
-    rt = r"\[reply:id=(.*?)]"
-    ids = re.findall(rt, str(raw_message))
-
-    if len(ids) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await deltag.finish()
-
-    rlyid = ids[0].split(",")[0]
-    resp = await bot.get_msg(message_id=rlyid)
-
-    img_msg = str(resp['message'])
-
-    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
-    imgs = re.findall(rt, img_msg)
-
-    if len(imgs) == 0:
-        await bot.call_api('send_group_msg', **{
-            'group_id':int(groupNum),
-            'message': '[CQ:at,qq='+user_id+']' + errMsg
-        })
-        await deltag.finish()
-
-
-    flag, forward_index, inverted_index = delTag(tags, imgs[0], groupNum, forward_index, inverted_index)
+    flag, forward_index, inverted_index = delTag(tags, imgs, groupNum, forward_index, inverted_index)
     with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
         json.dump(inverted_index, fc, indent=2, separators=(',',': '), ensure_ascii=False)
 
@@ -468,7 +418,6 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     await deltag.finish()
 
 
-# script_batch = on_command('{}脚本123'.format(plugin_config.quote_startcmd), **need_at)
 script_batch = on_regex(pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at)
 
 @script_batch.handle()
@@ -500,6 +449,7 @@ async def script_batch_handle(bot: Bot, event: Event, state: T_State):
     your_path = re.findall(ryour_path, raw_msg)
     gocq_path = re.findall(rgocq_path, raw_msg)
     tags = re.findall(rtags, raw_msg)
+    # print(group_id, your_path, gocq_path, tags)
     instruction = '''指令如下:
 batch_upload
 qqgroup=123456
@@ -509,7 +459,9 @@ tags=aaa bbb ccc'''
     if len(group_id) == 0 or len(your_path) == 0 or len(gocq_path) == 0:
         await script_batch.finish(instruction)
     # 获取图片
+    # image_files = copy_images_files('/home/sr/project/data','/home/sr/newgocq/data/cache')
     image_files = copy_images_files(your_path[0], gocq_path[0])
+    # print(image_files)
 
     total_len = len(image_files)
     idx = 0
@@ -526,7 +478,7 @@ tags=aaa bbb ccc'''
             ocr = await bot.ocr_image(image=imgid)
             ocr_content = handle_ocr_text(ocr['texts'])
         except exception.ActionFailed:
-            await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败, 请单独上传')
+            await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
             continue
         
         time.sleep(1)
@@ -559,3 +511,45 @@ tags=aaa bbb ccc'''
 
     await bot.send_msg(group_id=int(groupNum), message='批量导入完成')
     await script_batch.finish()
+
+
+
+copy_batch = on_regex(pattern="^{}batch_copy".format(plugin_config.quote_startcmd), **need_at)
+
+@copy_batch.handle()
+async def copy_batch_handle(bot: Bot, event: Event, state: T_State):
+
+    session_id = event.get_session_id()
+    user_id = str(event.get_user_id())
+
+    # 必须是超级管理员群聊
+    if user_id not in plugin_config.global_superuser:
+        await copy_batch.finish()
+
+
+    ryour_path =  r"your_path=(.*)\s"
+    rgocq_path =  r"gocq_path=(.*)"
+
+    raw_msg = str(event.get_message())
+    raw_msg = raw_msg.replace('\r','')
+    your_path = re.findall(ryour_path, raw_msg)
+    gocq_path = re.findall(rgocq_path, raw_msg)
+    # print(your_path, gocq_path)
+    instruction = '''指令如下:
+batch_copy
+your_path=/home/xxx/images
+gocq_path=/home/xxx/gocq/data/cache'''
+    if len(your_path) == 0 or len(gocq_path) == 0:
+        await copy_batch.finish(instruction)
+
+    global record_dict
+
+    try:
+        for value in record_dict.values():
+            for img in value:
+                num = len(img) - 8
+                name = img[-num:]
+                shutil.copyfile(gocq_path[0] + name, your_path[0] + name)
+    except FileNotFoundError:
+        await copy_batch.finish("路径不正确")
+    await copy_batch.finish("备份完成")

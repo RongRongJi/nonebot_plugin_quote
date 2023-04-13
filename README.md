@@ -32,9 +32,11 @@ _✨ QQ群聊 语录库 ✨_
 - [x] 根据关键词投放聊天语录 
 - [x] 支持白名单内用户删除语录
 - [x] 支持为指定语录增删标签
-- [x] [批量上传已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch_upload.md)
+- [x] [批量处理已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch.md)
 
 你的star是对我最好的支持！
+
+交流QQ群: 580407499
 
 ## 🎉 使用
 
@@ -216,10 +218,6 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 增加了初始文件的默认路径，不再需要用户手动创建文件
 - IO统一为UTF-8
 
-### v0.3.1 (2023/3/28)
-
-- 适配了一个不同版本reply格式不同的问题
-
 ### v0.3.2 (2023/3/29)
 
 - 增加了是否需要at机器人的选项
@@ -228,6 +226,11 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ### v0.3.4 (2023/4/2)
 
 - 增加批量上传语录功能（试验版）
+
+### v0.3.5 (2023/4/14)
+
+- 修改了匹配策略，使不同协议下的消息格式都可以匹配
+- 增加批量备份语录功能（试验版）
 
 ## 🎉 鸣谢
 

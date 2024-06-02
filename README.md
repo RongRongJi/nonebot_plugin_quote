@@ -232,6 +232,11 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 修改了匹配策略，使不同协议下的消息格式都可以匹配
 - 增加批量备份语录功能（试验版）
 
+### v0.3.6 (2024/6/2)
+
+- 更新了匹配规则，更改了ntQQ下图片无法识别的问题
+
+  
 ## 🎉 鸣谢
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。

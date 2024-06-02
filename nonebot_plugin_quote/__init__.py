@@ -127,9 +127,10 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
     if str(msg) in end_conversation:
         await record.finish('上传会话已结束')
 
-    rt = r"\[CQ:image,file=(.*?),subType=[\S]*,url=[\S]*\]"
+    rt = r"\[CQ:image,file=(.*?),url=[\S]*\]"
 
     files = re.findall(rt, str(msg))
+    files = [file.replace("&amp;", "&") for file in files]
 
     if len(files) == 0:
         resp = "请上传图片"

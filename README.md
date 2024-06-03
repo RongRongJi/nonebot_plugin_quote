@@ -138,7 +138,7 @@ nb plugin install nonebot-plugin-quote
 | QUOTE_STARTCMD | 否 | '' | 增加指令前缀 |
 
 
-`RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建了两个json文件。
+`RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建两个json文件。
 
 
 `QUOTE_SUPERUSER`的示例如下:

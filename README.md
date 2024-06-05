@@ -240,7 +240,8 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ### v0.3.6.1 (2024/6/5)
 
-- 更改ocr方式，从go-cqhttp自带ocr变更为使用PaddleOCR，请注意env文件必填项配置正确。首次使用会下载模型，时间可能较长（<1min），切记关闭代理。
+- 更改ocr方式，从go-cqhttp自带ocr变更为使用PaddleOCR，增加llBot支持。go-cqhttp用户请注意env文件QUOTE_PATH_NEW配置正确。
+- 首次使用会下载模型，时间可能较长（<1min），切记关闭代理。
 - [TODO]适配Lagrange框架。
 
   

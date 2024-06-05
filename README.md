@@ -130,6 +130,7 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
+| QUOTE_PATH_NEW | 是 |  | 你的go-cqhttp路径 形如C:/Users/20412/Desktop/bot/插件开发/gocq/ |
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
@@ -235,6 +236,11 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ### v0.3.6 (2024/6/2)
 
 - 更新了匹配规则，更改了ntQQ下图片无法识别的问题
+
+### v0.3.6.1 (2024/6/5)
+
+- 更改ocr方式，从go-cqhttp自带ocr变更为使用PaddleOCR，请注意env文件必填项配置正确。首次使用会下载模型，时间可能较长（<1min），切记关闭代理。
+- [TODO]适配Lagrange框架。
 
   
 ## 🎉 鸣谢

@@ -19,10 +19,16 @@ from .task import copy_images_files
 from .config import Config
 from nonebot.log import logger
 import time
+from paddleocr import PaddleOCR
+from PIL import Image
+import io
+
 
 # v0.3.5
 
 plugin_config = Config.parse_obj(get_driver().config)
+
+quote_path_new = plugin_config.quote_path_new
 
 need_at = {}
 if plugin_config.quote_needat:
@@ -127,24 +133,40 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
     if str(msg) in end_conversation:
         await record.finish('上传会话已结束')
 
-    rt = r"\[CQ:image,file=(.*?),url=[\S]*\]"
+    rt = r'\[CQ:image,file=(.*?),'  
 
+    #logger.debug(str(msg))
+    #logger.debug(str(event))
+    
+    #print(msg)
     files = re.findall(rt, str(msg))
     files = [file.replace("&amp;", "&") for file in files]
+    #logger.debug(files)
 
     if len(files) == 0:
         resp = "请上传图片"
         await record.reject_arg('prompt', MessageSegment.reply(message_id) + resp)
-
-    resp =  await bot.call_api('get_image',  **{'file':files[0]})
-
+    else:
+        logger.debug({'file':files[0]})
+        resp =  await bot.call_api('get_image',  **{'file':files[0]})
+        
+    #logger.debug(resp)
+    image_path = os.path.join(quote_path_new + resp['file'])
+    logger.debug("文件路径:"+ image_path)
     # OCR分词
+    # 初始化PaddleOCR
+    ocr = PaddleOCR(use_angle_cls=True, lang='ch')
     try:
-        ocr = await bot.ocr_image(image=files[0])
-
-        ocr_content = handle_ocr_text(ocr['texts'])
-    except exception.ActionFailed:
+        # 使用PaddleOCR进行OCR识别
+        ocr_result = ocr.ocr(image_path, cls=True)
+        # 处理OCR识别结果
         ocr_content = ''
+        for line in ocr_result:
+            for word in line:
+                ocr_content += word[1][0] + ' '
+    except Exception as e:
+        ocr_content = ''
+        print(f"OCR识别失败: {e}")
 
 
     if 'group' in session_id:
@@ -476,8 +498,20 @@ tags=aaa bbb ccc'''
             await bot.send_msg(group_id=int(groupNum), message='上述图片已存在')
             continue
         try:
-            ocr = await bot.ocr_image(image=imgid)
-            ocr_content = handle_ocr_text(ocr['texts'])
+            # 将image文件转换为PIL Image对象
+            image = Image.open(io.BytesIO(imgid), 'utf-8')
+            # 将PIL Image对象保存到临时路径
+            temp_image_path = 'temp_image.jpg'
+            image.save(temp_image_path)
+            # 使用PaddleOCR进行OCR识别
+            ocr_result = ocr.ocr(temp_image_path, cls=True)
+            # 处理OCR识别结果
+            ocr_content = ''
+            for line in ocr_result:
+                for word in line:
+                    ocr_content += word[1][0] + ' '
+            ocr_content = handle_ocr_text(ocr_content)
+
         except exception.ActionFailed:
             await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
             continue

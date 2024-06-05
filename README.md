@@ -236,7 +236,8 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ### v0.3.6 (2024/6/2)
 
-- 更新了匹配规则，更改了ntQQ下图片无法识别的问题
+- 更新了匹配规则，更改了ntQQ下图片无法识别的问题。
+- 原作者在摆（大概）故V0.3.6之后版本暂时由Hanserprpr(https://github.com/Hanserprpr)维护
 
 ### v0.3.6.1 (2024/6/5)
 

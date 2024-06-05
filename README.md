@@ -165,6 +165,7 @@ INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json
 RECORD_PATH=D:\your_path\record.json       
 INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
 
+QUOTE_PATH_NEW=C:/Users/20412/Desktop/bot/插件开发/gocq/
 QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
 GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True

@@ -130,7 +130,7 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| QUOTE_PATH_NEW | 是 |  | 你的go-cqhttp路径 形如C:/Users/20412/Desktop/bot/插件开发/gocq/ |
+| QUOTE_PATH_NEW | 否 |  | go-cqhttp必填。你的go-cqhttp路径 形如C:/Users/20412/Desktop/bot/插件开发/gocq/ |
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |

@@ -250,7 +250,9 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 更改图片发送和匹配方式
 - 自定义图片下载路径
 - 修正tag问题
-
+- 修复pydantic错误
+- 主流框架适配
+  
 ## 🎉 鸣谢
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。

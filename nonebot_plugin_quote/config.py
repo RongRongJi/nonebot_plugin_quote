@@ -9,3 +9,4 @@ class Config(BaseModel, extra=Extra.ignore):
     global_superuser: List[str] = []
     quote_needat: bool = True
     quote_startcmd: str = ''
+    quote_path: str = 'quote'

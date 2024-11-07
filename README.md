@@ -130,6 +130,7 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
+| QUOTE_PATH | 否 | ./data | 可选，默认使用'./data' |
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
@@ -138,7 +139,7 @@ nb plugin install nonebot-plugin-quote
 | QUOTE_STARTCMD | 否 | '' | 增加指令前缀 |
 
 
-`RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建了两个json文件。
+`RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建两个json文件。
 
 
 `QUOTE_SUPERUSER`的示例如下:
@@ -164,6 +165,7 @@ INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json
 RECORD_PATH=D:\your_path\record.json       
 INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
 
+QUOTE_PATH='./data'
 QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
 GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True
@@ -232,6 +234,25 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 修改了匹配策略，使不同协议下的消息格式都可以匹配
 - 增加批量备份语录功能（试验版）
 
+### v0.3.6 (2024/6/2)
+
+- 更新了匹配规则，更改了ntQQ下图片无法识别的问题。
+- 原作者在摆（大概）故V0.3.6之后版本暂时由[Hanserprpr](https://github.com/Hanserprpr)维护
+
+### v0.3.6.1 (2024/6/5)
+
+- 更改ocr方式，从go-cqhttp自带ocr变更为使用PaddleOCR，增加llBot支持。go-cqhttp用户请注意env文件QUOTE_PATH_NEW配置正确。
+- 首次使用会下载模型，时间可能较长（<1min），切记关闭代理。
+- [TODO]适配Lagrange框架。
+
+### v0.3.7 (2024/11/7)
+
+- 更改图片发送和匹配方式
+- 自定义图片下载路径
+- 修正tag问题
+- 修复pydantic错误
+- 主流框架适配
+  
 ## 🎉 鸣谢
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。

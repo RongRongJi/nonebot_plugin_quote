@@ -21,7 +21,7 @@ import io
 
 # v0.3.5
 
-plugin_config = Config.parse_obj(get_driver().config)
+plugin_config = Config.parse_obj(get_driver().config.dict())
 
 need_at = {}
 if (plugin_config.quote_needat):

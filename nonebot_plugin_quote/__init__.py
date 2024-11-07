@@ -1,17 +1,12 @@
 from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
-from nonebot.matcher import Matcher
 from nonebot.adapters import Message
-from nonebot.params import Arg, ArgPlainText, CommandArg, Matcher
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, GroupMessageEvent, exception
+from nonebot.params import Arg, ArgPlainText, CommandArg
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
 from nonebot.typing import T_State  
-import nonebot
 import re
 import json
-import base64
 import random
-import subprocess
-import sys
 import os
 import shutil
 from .task import offer, query, delete, handle_ocr_text, inverted2forward, findAlltag, addTag, delTag
@@ -19,7 +14,7 @@ from .task import copy_images_files
 from .config import Config
 from nonebot.log import logger
 import time
-from paddleocr import PaddleOCR, draw_ocr
+from paddleocr import PaddleOCR
 from PIL import Image
 import io
 
@@ -91,16 +86,16 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
     for msg_part in img_msg:
         if msg_part['type'] == 'image':
             image_found = True
-            img_url = msg_part['data']['url']
+            file_name = msg_part['data']['file']
+            image_info = await bot.call_api('get_image', file=file_name)
+            file_name = os.path.basename(image_info['file'])
             break
-
+            
     if not image_found:
-        logger.error(f"No image found in message: {img_msg}")
         await bot.send_msg(group_id=int(groupNum), message=MessageSegment.at(user_id) + errMsg)
         await listener.finish()
 
-    logger.info(f"Image URL: {img_url}")
-    return img_url
+    return file_name
 
 
 
@@ -144,14 +139,13 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
         
     
     image_path = resp['file']
-    logger.debug(image_path)
 
     if not os.path.exists(quote_path):
         os.makedirs(quote_path)
 
     shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
-    image_path = quote_path + '/' + os.path.basename(image_path)
-    logger.info(f"Image saved to {image_path}")
+    image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
+    logger.info(f"图片已保存到 {image_path}")
     # OCR分词
     # 初始化PaddleOCR
     ocr = PaddleOCR(use_angle_cls=True, lang='ch')
@@ -172,15 +166,13 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
         tmpList = session_id.split('_')
         groupNum = tmpList[1]
 
-        resp['file'] = resp['file'].replace('data/', '../')
-
-        inverted_index, forward_index = offer(groupNum, resp['file'], ocr_content, inverted_index, forward_index)
+        inverted_index, forward_index = offer(groupNum, image_path, ocr_content, inverted_index, forward_index)
 
         if groupNum not in record_dict:
-            record_dict[groupNum] = [resp['file']]
+            record_dict[groupNum] = [image_path]
         else:
-            if resp['file'] not in record_dict[groupNum]:
-                record_dict[groupNum].append(resp['file'])
+            if image_path not in record_dict[groupNum]:
+                record_dict[groupNum].append(image_path)
 
 
         with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
@@ -197,7 +189,6 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
 
 record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
-
 
 @record_pool.handle()
 async def record_pool_handle(bot: Bot, event: Event, state: T_State):
@@ -223,7 +214,6 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
                 length = len(record_dict[groupNum])
                 idx = random.randint(0, length - 1)
                 msg = MessageSegment.image(file=record_dict[groupNum][idx])
-                logger.debug(f"Random image selected: {record_dict[groupNum][idx]}")
         else:
             ret = query(search_info, groupNum, inverted_index)
 
@@ -238,19 +228,15 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
                     msg = '当前查询无结果, 为您随机发送。'
                     msg_segment = MessageSegment.image(file=record_dict[groupNum][idx])
                     msg = msg + msg_segment
-                    logger.debug(f"Random image selected: {record_dict[groupNum][idx]}")
             elif ret['status'] == 1:
                 msg = MessageSegment.image(file=ret['msg'])
-                logger.debug(f"Query result image: {ret['msg']}")
             else:
                 msg = ret.text
 
-        logger.debug(f"Final message: {msg}")
-        await bot.call_api('send_group_msg', **{
+        response = await bot.call_api('send_group_msg', **{
             'group_id': int(groupNum),
             'message': msg
         })
-
     await record_pool.finish()
 
 
@@ -344,10 +330,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
     raw_message = str(event)
 
     errMsg = '请回复需要指定语录'
-    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, alltag)
-
-    logger.debug(f"GroupNum: {groupNum}, Imgs: {imgs}")
-    
+    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, alltag)  
     tags = findAlltag(imgs, forward_index, groupNum)
     if tags is None:
         msg = '该语录不存在'

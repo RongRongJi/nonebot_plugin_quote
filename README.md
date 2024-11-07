@@ -130,7 +130,7 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| QUOTE_PATH_NEW | 否 |  | 可选，默认使用'./data' |
+| QUOTE_PATH | 否 | ./data | 可选，默认使用'./data' |
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
@@ -165,7 +165,7 @@ INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json
 RECORD_PATH=D:\your_path\record.json       
 INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
 
-QUOTE_PATH_NEW='./data'
+QUOTE_PATH='./data'
 QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
 GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True

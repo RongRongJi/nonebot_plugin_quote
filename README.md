@@ -261,5 +261,5 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ## 开发者
 
 <a href="https://github.com/RongRongJi/nonebot_plugin_quote/graphs/contributors">
-https://contrib.rocks/image?repo=RongRongJi/nonebot_plugin_quote&max=1000
+    <img src="https://contrib.rocks/image?repo=RongRongJi/nonebot_plugin_quote&max=1000" alt="contributors" />
 </a>

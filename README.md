@@ -197,16 +197,6 @@ nonebot.load_plugin("nonebot_plugin_quote")
 nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ```
 
-# 如果出现pydantic错误 
-在config.py中将第一行替换为
-```
-from pydantic.v1 import BaseModel, Extra
-```
-或者你可以直接
-```
-pip install "pydantic<2.0"
-```
-
 ## Change Log
 
 ### v0.2.0 (2023/3/20)

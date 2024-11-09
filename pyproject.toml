@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-quote"
-version = "0.3.7.2"
+version = "0.3.7.4"
 description = "一款适用于QQ群聊天的语录库插件"
 authors = ["RongRongJi <316315867@qq.com>", "Hanserprpr <2041283903@qq.com>"]
 license = "MIT"
@@ -14,6 +14,7 @@ nonebot2 = "^2.0.0rc3"
 nonebot-adapter-onebot = "^2.2.1"
 paddleocr = "^2.9.1"
 paddlepaddle = "^2.6.2"
+setuptools = "^75.3.0"
 
 
 

@@ -4,6 +4,7 @@ from nonebot.adapters import Message
 from nonebot.params import Arg, ArgPlainText, CommandArg
 from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
 from nonebot.typing import T_State  
+from nonebot.plugin import PluginMetadata
 import re
 import json
 import random
@@ -19,7 +20,21 @@ from PIL import Image
 import io
 
 
-# v0.3.5
+# v0.3.7
+
+__plugin_meta__ = PluginMetadata(
+    name='群聊语录库',
+    description='一款QQ群语录库——支持上传聊天截图为语录，随机投放语录，关键词搜索语录精准投放',
+    usage='help',
+    type="application",
+    homepage="https://github.com/RongRongJi/nonebot-plugin-quote",
+    config=Config,
+    supported_adapters={"~onebot.v11"},
+    extra={
+        'author': 'RongRongJi',
+        'version': 'v0.3.7.2',
+    },
+)
 
 plugin_config = Config.parse_obj(get_driver().config.dict())
 

@@ -19,7 +19,7 @@ from PIL import Image
 import io
 
 
-# v0.3.5
+# v0.3.6
 
 plugin_config = Config.parse_obj(get_driver().config.dict())
 

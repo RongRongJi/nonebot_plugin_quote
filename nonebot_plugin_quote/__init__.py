@@ -4,6 +4,7 @@ from nonebot.adapters import Message
 from nonebot.params import Arg, ArgPlainText, CommandArg
 from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
 from nonebot.typing import T_State  
+from nonebot.plugin import PluginMetadata
 import re
 import json
 import random
@@ -17,9 +18,25 @@ import time
 from paddleocr import PaddleOCR
 from PIL import Image
 import io
+import httpx
+import uuid
 
 
-# v0.3.6
+# v0.3.8
+
+__plugin_meta__ = PluginMetadata(
+    name='群聊语录库',
+    description='一款QQ群语录库——支持上传聊天截图为语录，随机投放语录，关键词搜索语录精准投放',
+    usage='语录 上传 删除',
+    type="application",
+    homepage="https://github.com/RongRongJi/nonebot_plugin_quote",
+    config=Config,
+    supported_adapters={"~onebot.v11"},
+    extra={
+        'author': 'RongRongJi',
+        'version': 'v0.3.8',
+    },
+)
 
 plugin_config = Config.parse_obj(get_driver().config.dict())
 
@@ -131,19 +148,32 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
     logger.debug(files)
 
+    if not os.path.exists(quote_path):
+        os.makedirs(quote_path)
+
     if len(files) == 0:
         resp = "请上传图片"
         await record.reject_arg('prompt', MessageSegment.reply(message_id) + resp)
     else:
-        resp = await bot.call_api('get_image',  **{'file': files})
-        
-    
-    image_path = resp['file']
+        try:
+            resp = await bot.call_api('get_image', **{'file': files})
+            image_path = resp['file']
+            shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
+            
+        except Exception as e:
+            logger.warning(f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}")
+            async with httpx.AsyncClient() as client:
+                image_url = msg['image'][0].data['url']
+                response = await client.get(image_url)
+                if response.status_code == 200:
+                    random_filename = f"{uuid.uuid4().hex}.png"
+                    image_path = os.path.join(quote_path, random_filename)
+                    with open(image_path, "wb") as f:
+                        f.write(response.content)
+                    resp = {"file": image_path}
+                else:
+                    raise Exception("httpx 下载失败")
 
-    if not os.path.exists(quote_path):
-        os.makedirs(quote_path)
-
-    shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
     image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
     logger.info(f"图片已保存到 {image_path}")
     # OCR分词

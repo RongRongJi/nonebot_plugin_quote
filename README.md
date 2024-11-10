@@ -252,6 +252,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 修正tag问题
 - 修复pydantic错误
 - 主流框架适配
+
+### v0.3.8 (2024/11/10)
+
+- Lagrange没有实现get_image，更改图片下载方式以适配Lagrange
   
 ## 🎉 鸣谢
 

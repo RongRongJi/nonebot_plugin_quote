@@ -25,14 +25,14 @@ import io
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
     description='一款QQ群语录库——支持上传聊天截图为语录，随机投放语录，关键词搜索语录精准投放',
-    usage='help',
+    usage='语录 上传 删除',
     type="application",
-    homepage="https://github.com/RongRongJi/nonebot-plugin-quote",
+    homepage="https://github.com/RongRongJi/nonebot_plugin_quote",
     config=Config,
     supported_adapters={"~onebot.v11"},
     extra={
         'author': 'RongRongJi',
-        'version': 'v0.3.7.4',
+        'version': 'v0.3.7.5',
     },
 )
 

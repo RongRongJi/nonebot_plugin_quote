@@ -166,7 +166,7 @@ RECORD_PATH=D:\your_path\record.json
 INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
 
 QUOTE_PATH='./data'
-QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321]}
+QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321"]}
 GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True
 QUOTE_STARTCMD=""
@@ -257,3 +257,9 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 - [NoneBot2](https://github.com/nonebot/nonebot2)：本插件使用的开发框架。
 - [go-cqhttp](https://github.com/Mrs4s/go-cqhttp)：稳定完善的 CQHTTP 实现。
+
+## 开发者
+
+<a href="https://github.com/RongRongJi/nonebot_plugin_quote/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=RongRongJi/nonebot_plugin_quote" alt="contributors" />
+</a>

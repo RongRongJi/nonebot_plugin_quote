@@ -10,7 +10,7 @@
 
 _✨ QQ群聊 语录库 ✨_
 
-🧬 支持OCR识别，关键词搜索 | 一起记录群友的逆天言论吧！🎉 
+🧬 支持OCR识别，关键词搜索 | 一起记录群友的逆天言论吧！🎉
 
 <p align="center">
   <img src="https://img.shields.io/github/license/EtherLeaF/nonebot-plugin-colab-novelai" alt="license">
@@ -22,14 +22,13 @@ _✨ QQ群聊 语录库 ✨_
 </p>
 </div>
 
-
 ## 📖 介绍
 
 一款适用于QQ群聊天的语录库插件。
 
 - [x] 上传聊天截图
 - [x] 随机投放聊天语录
-- [x] 根据关键词投放聊天语录 
+- [x] 根据关键词投放聊天语录
 - [x] 支持白名单内用户删除语录
 - [x] 支持为指定语录增删标签
 - [x] [批量处理已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch.md)
@@ -87,7 +86,6 @@ _✨ QQ群聊 语录库 ✨_
 
 默认配置下，@机器人加指令即可。
 
-
 | 指令 | 需要@ | 范围 | 说明 |
 |:-----:|:----:|:------:|:-----------:|
 | 上传/开始上传/上传开始 | 必须 | 群聊 | 开启语录上传通道 |
@@ -99,7 +97,6 @@ _✨ QQ群聊 语录库 ✨_
 | 回复机器人 + addtag + 标签(addtag和标签之间需要空格)| 可选 | 群聊 | 为该条语录增加额外标签 |
 | 回复机器人 + deltag + 标签(deltag和标签之间需要空格)| 可选 | 群聊 | 为该条语录删除指定标签 |
 | 回复机器人 + alltag| 可选 | 群聊 | 查看该条语录所有标签 |
-
 
 ## 💿 安装
 
@@ -127,7 +124,6 @@ nb plugin install nonebot-plugin-quote
 
 在 nonebot2 项目的 `.env` 文件中添加下表中的必填配置
 
-
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
 | QUOTE_PATH | 否 | ./data | 可选，默认使用'./data' |
@@ -138,9 +134,7 @@ nb plugin install nonebot-plugin-quote
 | QUOTE_NEEDAT | 否 | True | 是否需要at机器人(开启上传通道必须at) |
 | QUOTE_STARTCMD | 否 | '' | 增加指令前缀 |
 
-
 `RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建两个json文件。
-
 
 `QUOTE_SUPERUSER`的示例如下:
 
@@ -171,7 +165,6 @@ GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True
 QUOTE_STARTCMD=""
 ```
-
 
 随后，在项目的`pyproject.toml`或`bot.py`中加上如下代码，加载插件（根据版本而定）
 
@@ -252,6 +245,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 修正tag问题
 - 修复pydantic错误
 - 主流框架适配
+
+### v0.3.8 (2024/11/10)
+
+- 由于 Lagrange 未实现 get_image，更改图片下载方式以适配 Lagrange。
   
 ## 🎉 鸣谢
 
@@ -260,6 +257,4 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ## 开发者
 
-<a href="https://github.com/RongRongJi/nonebot_plugin_quote/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=RongRongJi/nonebot_plugin_quote" alt="contributors" />
-</a>
+[![contributors](https://contrib.rocks/image?repo=RongRongJi/nonebot_plugin_quote)](https://github.com/RongRongJi/nonebot_plugin_quote/graphs/contributors)

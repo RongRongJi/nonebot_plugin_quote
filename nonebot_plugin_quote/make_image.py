@@ -73,11 +73,11 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
         current_line = []
         for word in wrapped_lines:
             current_line.append(word)
-            if transbox(font.getbbox(' '.join(current_line)))[0] >= max_text_width:
-                lines.append(' '.join(current_line[:-1]))
+            if transbox(font.getbbox(''.join(current_line)))[0] >= max_text_width:
+                lines.append(''.join(current_line[:-1]))
                 current_line = [current_line[-1]]
         if current_line:
-            lines.append(' '.join(current_line))
+            lines.append(''.join(current_line))
         wrapped_text = lines
 
         # 调整字体大小直到文字宽度合适
@@ -97,11 +97,11 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
             current_line = []
             for word in wrapped_text:
                 current_line.append(word)
-                if transbox(font.getbbox(' '.join(current_line)))[0] >= max_text_width:
+                if transbox(font.getbbox(''.join(current_line)))[0] >= max_text_width:
                     lines.append(''.join(current_line[:-1]))
                     current_line = [current_line[-1]]
             if current_line:
-                lines.append(' '.join(current_line))
+                lines.append(''.join(current_line))
             wrapped_text = lines
 
             if font_size <= 1:

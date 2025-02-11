@@ -169,19 +169,21 @@ nb plugin install nonebot-plugin-quote
 ```
  # linux环境下路径
 RECORD_PATH=/home/your_name/your_path/record.json      
-INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json   
+INVERTED_INDEX_PATH=/home/your_name/your_path/inverted_index.json
+FONT_PATH=/home/your_name/your_path/font.ttf
+AUTHOR_FONT_PATH=/home/your_name/your_path/author_font.ttf 
 
 # Windows环境下路径
 RECORD_PATH=D:\your_path\record.json       
-INVERTED_INDEX_PATH=D:\your_path\inverted_index.json  
+INVERTED_INDEX_PATH=D:\your_path\inverted_index.json
+FONT_PATH=D:\your_path\font.ttf
+AUTHOR_FONT_PATH=D:\your_path\author_font.ttf
 
 QUOTE_PATH='./data'
 QUOTE_SUPERUSER={"12345":["123456"],"54321":["123456","654321"]}
 GLOBAL_SUPERUSER=["6666666"]
 QUOTE_NEEDAT=True
 QUOTE_STARTCMD=""
-FONT_PATH='./Sarasa.ttf'
-AUTHOR_FONT_PATH='./STKai.ttf'
 ```
 
 随后，在项目的`pyproject.toml`或`bot.py`中加上如下代码，加载插件（根据版本而定）

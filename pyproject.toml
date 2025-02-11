@@ -16,7 +16,8 @@ paddleocr = "^2.9.1"
 paddlepaddle = "^2.6.2"
 setuptools = "^75.3.0"
 httpx = "^0.27.2"
-
+pillow = "^11.1"
+emoji = "^2.14"
 
 [build-system]
 requires = ["poetry-core"]

@@ -10,3 +10,5 @@ class Config(BaseModel, extra=Extra.ignore):
     quote_needat: bool = True
     quote_startcmd: str = ''
     quote_path: str = 'quote'
+    font_path: str = 'font1'
+    author_font_path: str = 'font2'

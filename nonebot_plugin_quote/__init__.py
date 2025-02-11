@@ -19,8 +19,9 @@ from paddleocr import PaddleOCR
 from PIL import Image
 import io
 import httpx
+import hashlib
 import uuid
-
+from .make_image import generate_quote_image
 
 # v0.3.8
 
@@ -44,10 +45,11 @@ need_at = {}
 if (plugin_config.quote_needat):
     need_at['rule'] = to_me()
 
-
 record_dict = {}
 inverted_index = {}
 quote_path = plugin_config.quote_path
+font_path = plugin_config.font_path
+author_font_path = plugin_config.author_font_path 
 
 if quote_path == 'quote':
     quote_path = './data'
@@ -114,12 +116,9 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
 
     return file_name
 
-
-
  # 语录库
 record = on_command("{}上传".format(plugin_config.quote_startcmd), priority=10, block=True, rule=to_me())
-end_conversation = ['stop', '结束', '上传截图', '结束上传']
-
+end_conversation = ['stop', '结束', '上传结束', '结束上传']
 
 @record.handle()
 async def _(event: MessageEvent, args: Message = CommandArg()):
@@ -339,8 +338,6 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
     await delete_record.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-
-
 alltag = on_command('{}alltag'.format(plugin_config.quote_startcmd), aliases={'{}标签'.format(plugin_config.quote_startcmd), '{}tag'.format(plugin_config.quote_startcmd)}, **need_at)
 
 @alltag.handle()
@@ -405,7 +402,6 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-
 deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
 
 @deltag.handle()
@@ -420,7 +416,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     tags = str(event.get_message()).replace('{}deltag'.format(plugin_config.quote_startcmd), '').strip().split(' ')
 
     if 'group' not in session_id:
-        await addtag.finish()
+        await deltag.finish()
 
     groupNum = session_id.split('_')[1]
     raw_message = str(event)
@@ -438,6 +434,134 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
         msg = '已移除该语录的{}标签'.format(tags)
     await deltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
+
+make_record = on_keyword({"{}记录".format(plugin_config.quote_startcmd)}, priority=10, block=True)
+
+@make_record.handle()
+async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    if event.reply:
+        size = 640
+        qqid = event.reply.sender.user_id
+        raw_message = event.reply.message.extract_plain_text()
+        card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
+        session_id = event.get_session_id()
+    else:
+        await make_record.finish("请回复所需的消息")
+
+    if raw_message:
+
+        url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s={size}"
+
+        async def download_url(url: str) -> bytes:
+            async with httpx.AsyncClient() as client:
+                for i in range(3):
+                    try:
+                        resp = await client.get(url, timeout=10)
+                        resp.raise_for_status()
+                        return resp.content
+                    except Exception as e:
+                        logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
+                        await asyncio.sleep(3)
+            raise NetworkError(f"{url} 下载失败！")
+
+        data = await download_url(url)
+        if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
+            url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s=100"
+            data = await download_url(url)
+
+        if data:
+            image_file = io.BytesIO(data)
+            img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+
+            image_name = hashlib.md5(img_data).hexdigest() + '.png'
+
+            image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_name)))
+
+            with open(image_path, "wb") as file:
+                file.write(img_data)
+
+            if 'group' in session_id:
+                tmpList = session_id.split('_')
+                groupNum = tmpList[1]
+
+                inverted_index, forward_index = offer(groupNum, image_path, card + ' ' + raw_message, inverted_index, forward_index)
+
+                if groupNum not in record_dict:
+                    record_dict[groupNum] = [image_path]
+                else:
+                    if image_path not in record_dict[groupNum]:
+                        record_dict[groupNum].append(image_path)
+
+                with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+                    json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
+
+                with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+                    json.dump(inverted_index, fc, indent=2, separators=(',', ': '), ensure_ascii=False)
+
+            msg = MessageSegment.image(img_data)
+            response = await bot.call_api('send_group_msg', **{
+                'group_id': int(groupNum),
+                'message': msg
+            })
+    else:
+        await make_record.send('空内容')
+    await make_record.finish()
+
+render_quote = on_keyword(keywords={"{}生成".format(plugin_config.quote_startcmd)}, priority=10, block=True)
+
+@render_quote.handle()
+async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
+    global inverted_index
+    global record_dict
+    global forward_index
+
+    if event.reply:
+        size = 640
+        qqid = event.reply.sender.user_id
+        raw_message = event.reply.message.extract_plain_text()
+        card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
+        session_id = event.get_session_id()
+    else:
+        await make_record.finish("请回复所需的消息")
+
+    if raw_message:
+
+        url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s={size}"
+
+        async def download_url(url: str) -> bytes:
+            async with httpx.AsyncClient() as client:
+                for i in range(3):
+                    try:
+                        resp = await client.get(url, timeout=10)
+                        resp.raise_for_status()
+                        return resp.content
+                    except Exception as e:
+                        logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
+                        await asyncio.sleep(3)
+            raise NetworkError(f"{url} 下载失败！")
+
+        data = await download_url(url)
+        if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
+            url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s=100"
+            data = await download_url(url)
+
+        if data:
+            image_file = io.BytesIO(data)
+            img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+            
+            msg = MessageSegment.image(img_data)
+            response = await bot.call_api('send_group_msg', **{
+                'group_id': int(session_id.split('_')[1]),
+                'message': msg
+            })
+    else:
+        await render_quote.send('空内容')
+
+    await render_quote.finish()
 
 script_batch = on_regex(pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at)
 
@@ -544,8 +668,6 @@ tags=aaa bbb ccc'''
 
     await bot.send_msg(group_id=int(groupNum), message='批量导入完成')
     await script_batch.finish()
-
-
 
 copy_batch = on_regex(pattern="^{}batch_copy".format(plugin_config.quote_startcmd), **need_at)
 

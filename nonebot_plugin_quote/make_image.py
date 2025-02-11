@@ -104,6 +104,9 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
                 lines.append(' '.join(current_line))
             wrapped_text = lines
 
+            if font_size <= 1:
+                break
+
     quote_content = "\n".join(wrapped_text) 
 
     y = 0

@@ -68,7 +68,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
 
     if text:
         # 使用 textwrap 自动换行
-        wrapped_lines = textwrap.wrap(text, width=30)  # 调整宽度以适应
+        wrapped_lines = textwrap.wrap(text, width=30, drop_whitespace=False)  # 调整宽度以适应
         lines = []
         current_line = []
         for word in wrapped_lines:
@@ -91,7 +91,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
 
             font_size -= 1
             font = ImageFont.truetype(font_path, font_size)
-            wrapped_text = textwrap.wrap(text, width=25)
+            wrapped_text = textwrap.wrap(text, width=30, drop_whitespace=False)
             # 重新分词
             lines = []
             current_line = []
@@ -120,7 +120,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
     total_content_height = len(lines) * line_height + ((len(lines) - 1) * line_spacing)
 
     # 计算居中垂直偏移量
-    vertical_offset = (text_area_height - total_content_height) // 2 - 40
+    vertical_offset = (text_area_height - total_content_height) // 2 - 30
 
     # 计算文字左侧居中偏移量
     total_text_width = max(transbox(font.getbbox(line))[0] for line in lines)

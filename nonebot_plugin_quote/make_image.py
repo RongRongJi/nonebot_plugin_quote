@@ -53,7 +53,6 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
     text_area_width = canvas_width - avatar_size
     text_area_height = fixed_height
     text_area = Image.new("RGBA", (text_area_width, text_area_height), (0, 0, 0, 255))
-    text_draw = text_area
 
     # 设置字体
     font_size = 80
@@ -68,7 +67,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
 
     if text:
         # 使用 textwrap 自动换行
-        wrapped_lines = textwrap.wrap(text, width=30, drop_whitespace=False)  # 调整宽度以适应
+        wrapped_lines = textwrap.wrap(text, width=25, drop_whitespace=False)  # 调整宽度以适应
         lines = []
         current_line = []
         for word in wrapped_lines:
@@ -91,7 +90,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
 
             font_size -= 1
             font = ImageFont.truetype(font_path, font_size)
-            wrapped_text = textwrap.wrap(text, width=30, drop_whitespace=False)
+            wrapped_text = textwrap.wrap(text, width=25, drop_whitespace=False)
             # 重新分词
             lines = []
             current_line = []
@@ -130,7 +129,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
     for line in lines:
         text_width = transbox(font.getbbox(line))[0]
         x = left_offset + 20  # 保留20像素左内边距
-        with Pilmoji(text_draw, source=GoogleEmojiSource) as pilmoji:
+        with Pilmoji(text_area, source=GoogleEmojiSource) as pilmoji:
             pilmoji.text((x, vertical_offset + y), line, font=font, fill=(255, 255, 255, 255))
         y += line_height + line_spacing
 
@@ -140,7 +139,7 @@ def generate_quote_image(avatar_bytes, text, author,  font_path, author_font_pat
     author_width = transbox(author_font.getbbox(author_text))[0]
     author_x = text_area_width - author_width - 40
     author_y = text_area_height - transbox(author_font.getbbox("A"))[1] - 40
-    with Pilmoji(text_draw, source=GoogleEmojiSource) as pilmoji:
+    with Pilmoji(text_area, source=GoogleEmojiSource) as pilmoji:
         pilmoji.text((author_x, author_y), author_text, font=author_font, fill=(255, 255, 255, 255))
 
     # 将文字区域粘贴到画布

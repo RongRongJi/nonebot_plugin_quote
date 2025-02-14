@@ -31,7 +31,7 @@ _✨ QQ群聊 语录库 ✨_
 - [x] 根据关键词投放聊天语录
 - [x] 支持白名单内用户删除语录
 - [x] 支持为指定语录增删标签
-- [x] [批量处理已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch.md)
+- [x] ~~[批量处理已有聊天截图(测试功能)](https://github.com/RongRongJi/nonebot_plugin_quote/blob/main/batch.md) (版本更新，该功能暂时不可用，等后续更新)~~
 
 你的star是对我最好的支持！
 
@@ -86,13 +86,13 @@ _✨ QQ群聊 语录库 ✨_
 
 在配置好中文字体路径后，以“命令前缀+**生成**”，回复群内任意一句话，即可生成如下语录体图片，**不录入语录库和本地保存**，支持emoji渲染，推荐使用等宽黑体（例如[更纱黑体](https://github.com/be5invis/Iosevka)）以达到最好效果。
 
-<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/render.png" width="40%" />
+<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/auto_generate.png" width="40%" />
 
 ### 上传语录式图片
 
 在配置好中文字体路径后，以“命令前缀+**上传**”，回复群内任意一句话，即可生成如下语录体图片，**录入语录库和本地保存**，支持emoji渲染，推荐使用等宽黑体（例如[更纱黑体](https://github.com/be5invis/Iosevka)）以达到最好效果。
 
-<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/render.png" width="40%" />
+<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/auto_record.png" width="40%" />
 
 ### 详细命令
 
@@ -109,8 +109,8 @@ _✨ QQ群聊 语录库 ✨_
 | 回复机器人 + addtag + 标签(addtag和标签之间需要空格)| 可选 | 群聊 | 为该条语录增加额外标签 |
 | 回复机器人 + deltag + 标签(deltag和标签之间需要空格)| 可选 | 群聊 | 为该条语录删除指定标签 |
 | 回复机器人 + alltag| 可选 | 群聊 | 查看该条语录所有标签 |
-| 回复消息+记录 | 否 | 群聊 | 为回复消息生成语录式图片并记录至语录库 |
-| 回复消息+生成 | 否 | 群聊 | 为回复消息生成语录式图片，不在本地存储 |
+| 回复消息+记录 | 否 | 群聊 | 为回复消息生成语录式图片并**记录至语录库**，不能上传自己的语录 |
+| 回复消息+生成 | 否 | 群聊 | 为回复消息生成语录式图片，**不在本地存储** |
 
 ## 💿 安装
 
@@ -140,8 +140,8 @@ nb plugin install nonebot-plugin-quote
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| FONT_PATH | 是 | None | 必要的语录中文字体文件路径 |
-| AUTHOR_FONT_PATH | 是 | None | 必要的作者中文字体文件路径 |
+| FONT_PATH | 是 | None | 必要的语录中文字体文件路径（若不填，部分功能无法使用） |
+| AUTHOR_FONT_PATH | 是 | None | 必要的作者中文字体文件路径（若不填，部分功能无法使用） |
 | QUOTE_PATH | 否 | ./data | 可选，默认使用'./data' |
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
@@ -212,6 +212,9 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ## Change Log
 
+<details>
+<summary>点击展开更新日志</summary>
+
 ### v0.2.0 (2023/3/20)
 
 - 删除了对Docker OCR的依赖，现在无需使用Docker，直接安装插件运行即可
@@ -272,7 +275,12 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 ### v0.3.9 (2025/2/11)
 
-- 增加生成语录图片功能
+- 增加自动生成、记录语录图片功能，感谢[Pigz2538](https://github.com/pigz2538)提交
+
+
+</details>
+
+
 
 ## 🎉 鸣谢
 

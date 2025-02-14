@@ -12,7 +12,7 @@ import os
 import shutil
 from .task import offer, query, delete, handle_ocr_text, inverted2forward, findAlltag, addTag, delTag
 from .task import copy_images_files
-from .config import Config
+from .config import Config, check_font
 from nonebot.log import logger
 import time
 from paddleocr import PaddleOCR
@@ -23,7 +23,7 @@ import hashlib
 import uuid
 from .make_image import generate_quote_image
 
-# v0.3.8
+# v0.3.9
 
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
@@ -35,7 +35,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         'author': 'RongRongJi',
-        'version': 'v0.3.8',
+        'version': 'v0.3.9',
     },
 )
 
@@ -51,9 +51,13 @@ quote_path = plugin_config.quote_path
 font_path = plugin_config.font_path
 author_font_path = plugin_config.author_font_path 
 
+# 判断参数配置情况
 if quote_path == 'quote':
     quote_path = './data'
     logger.warning('未配置quote文件路径，使用默认配置: ./data')
+
+if not check_font(font_path, author_font_path):
+    logger.warning('未配置字体路径，部分功能无法使用')
     
 # 首次运行时导入表
 try:
@@ -435,10 +439,16 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     await deltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-make_record = on_keyword({"{}记录".format(plugin_config.quote_startcmd)}, priority=10, block=True)
+make_record = on_regex(pattern="^{}记录$".format(plugin_config.quote_startcmd))
 
 @make_record.handle()
 async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
+
+    if not check_font(font_path, author_font_path):
+        # 字体没配置就返回
+        logger.warning('未配置字体路径，部分功能无法使用')
+        await make_record.finish()
+
     global inverted_index
     global record_dict
     global forward_index
@@ -451,6 +461,9 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
         session_id = event.get_session_id()
     else:
         await make_record.finish("请回复所需的消息")
+
+    if str(qqid) == str(event.get_user_id()):
+        await make_record.finish("不能记录自己的消息")
 
     if raw_message:
 
@@ -511,10 +524,16 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
         await make_record.send('空内容')
     await make_record.finish()
 
-render_quote = on_keyword(keywords={"{}生成".format(plugin_config.quote_startcmd)}, priority=10, block=True)
+render_quote = on_regex(pattern="^{}生成$".format(plugin_config.quote_startcmd))
 
 @render_quote.handle()
 async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
+
+    if not check_font(font_path, author_font_path):
+        # 字体没配置就返回
+        logger.warning('未配置字体路径，部分功能无法使用')
+        await make_record.finish()
+
     global inverted_index
     global record_dict
     global forward_index

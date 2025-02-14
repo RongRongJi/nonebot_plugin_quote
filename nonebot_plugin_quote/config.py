@@ -12,3 +12,7 @@ class Config(BaseModel, extra=Extra.ignore):
     quote_path: str = 'quote'
     font_path: str = 'font1'
     author_font_path: str = 'font2'
+
+def check_font(font_path, author_font_path):
+    # 判断字体是否配置
+    return not (font_path == 'font1' or author_font_path == 'font2')

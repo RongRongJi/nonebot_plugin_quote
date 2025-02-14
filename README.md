@@ -86,13 +86,13 @@ _✨ QQ群聊 语录库 ✨_
 
 在配置好中文字体路径后，以“命令前缀+**生成**”，回复群内任意一句话，即可生成如下语录体图片，**不录入语录库和本地保存**，支持emoji渲染，推荐使用等宽黑体（例如[更纱黑体](https://github.com/be5invis/Iosevka)）以达到最好效果。
 
-<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/auto_generate.png" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/auto_generate.png" width="40%" />
 
 ### 上传语录式图片
 
 在配置好中文字体路径后，以“命令前缀+**上传**”，回复群内任意一句话，即可生成如下语录体图片，**录入语录库和本地保存**，支持emoji渲染，推荐使用等宽黑体（例如[更纱黑体](https://github.com/be5invis/Iosevka)）以达到最好效果。
 
-<img src="https://github.com/pigz2538/nonebot_plugin_quote/raw/main/screenshot/auto_record.png" width="40%" />
+<img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/auto_record.jpg" width="40%" />
 
 ### 详细命令
 

@@ -357,7 +357,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
 
     await alltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
-addtag = on_regex(pattern="^{}addtag\ ".format(re.escape(plugin_config.quote_startcmd)), **need_at)
+addtag = on_regex(pattern="^{}addtag\ ".format(plugin_config.quote_startcmd), **need_at)
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -391,7 +391,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-deltag = on_regex(pattern="^{}deltag\ ".format(re.escape(plugin_config.quote_startcmd)), **need_at)
+deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):
@@ -570,7 +570,7 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
 
 
 
-script_batch = on_regex(pattern="^{}batch_upload".format(re.escape(plugin_config.quote_startcmd)), **need_at)
+script_batch = on_regex(pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at)
 
 @script_batch.handle()
 async def script_batch_handle(bot: Bot, event: Event, state: T_State):
@@ -676,7 +676,7 @@ tags=aaa bbb ccc'''
     await bot.send_msg(group_id=int(groupNum), message='批量导入完成')
     await script_batch.finish()
 
-copy_batch = on_regex(pattern="^{}batch_copy".format(re.escape(plugin_config.quote_startcmd)), **need_at)
+copy_batch = on_regex(pattern="^{}batch_copy".format(plugin_config.quote_startcmd), **need_at)
 
 @copy_batch.handle()
 async def copy_batch_handle(bot: Bot, event: Event, state: T_State):

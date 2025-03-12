@@ -23,7 +23,7 @@ import hashlib
 import uuid
 from .make_image import generate_quote_image
 
-# v0.3.9
+# v0.4.0
 
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
@@ -35,7 +35,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         'author': 'RongRongJi',
-        'version': 'v0.3.9',
+        'version': 'v0.4.0',
     },
 )
 
@@ -121,62 +121,48 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
     return file_name
 
  # 语录库
-record = on_command("{}上传".format(plugin_config.quote_startcmd), priority=10, block=True, rule=to_me())
-end_conversation = ['stop', '结束', '上传结束', '结束上传']
 
-@record.handle()
-async def _(event: MessageEvent, args: Message = CommandArg()):
-    if isinstance(event, PrivateMessageEvent):
-        await record.finish()
+save_img = on_regex(pattern="^{}上传$".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
-    plain_text = args.extract_plain_text()
-    if plain_text:
-        record.set_arg("prompt", message=args)
+@save_img.handle()
+async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
 
-
-@record.got("prompt", prompt="请上传语录(图片形式)")
-async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), msg: Message = Arg("prompt")):
+    session_id = event.get_session_id()
+    message_id = event.message_id
 
     global inverted_index
     global record_dict
     global forward_index
 
-    session_id = event.get_session_id()
-    message_id = event.message_id
-
-    if str(msg) in end_conversation:
-        await record.finish('上传会话已结束')
-
-    files = msg["image"][0].data["file"]
-
-    logger.debug(files)
-
-    if not os.path.exists(quote_path):
-        os.makedirs(quote_path)
-
-    if len(files) == 0:
-        resp = "请上传图片"
-        await record.reject_arg('prompt', MessageSegment.reply(message_id) + resp)
+    if event.reply:
+        raw_message = str(event.reply.message)
+        match = re.search(r'file=([^,]+)', raw_message)
+        if match:
+            file_name = match.group(1).strip('"\'')
+        else:
+            await make_record.finish("未检测到图片，请回复所需上传的图片消息来上传语录")
     else:
-        try:
-            resp = await bot.call_api('get_image', **{'file': files})
-            image_path = resp['file']
-            shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
-            
-        except Exception as e:
-            logger.warning(f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}")
-            async with httpx.AsyncClient() as client:
-                image_url = msg['image'][0].data['url']
-                response = await client.get(image_url)
-                if response.status_code == 200:
-                    random_filename = f"{uuid.uuid4().hex}.png"
-                    image_path = os.path.join(quote_path, random_filename)
-                    with open(image_path, "wb") as f:
-                        f.write(response.content)
-                    resp = {"file": image_path}
-                else:
-                    raise Exception("httpx 下载失败")
+        await make_record.finish("请回复所需上传的图片消息来上传语录")
 
+    try:
+        resp = await bot.call_api('get_image', **{'file': file_name})
+        image_path = resp['file']
+        shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
+    
+    except Exception as e:
+        logger.warning(f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}")
+        async with httpx.AsyncClient() as client:
+            image_url = msg['image'][0].data['url']
+            response = await client.get(image_url)
+            if response.status_code == 200:
+                random_filename = f"{uuid.uuid4().hex}.png"
+                image_path = os.path.join(quote_path, random_filename)
+                with open(image_path, "wb") as f:
+                    f.write(response.content)
+                resp = {"file": image_path}
+            else:
+                raise Exception("httpx 下载失败")
+    
     image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
     logger.info(f"图片已保存到 {image_path}")
     # OCR分词
@@ -216,9 +202,8 @@ async def record_upload(bot: Bot, event: MessageEvent, prompt: Message = Arg(), 
 
     await bot.call_api('send_group_msg', **{
             'group_id': int(groupNum),
-            'message': MessageSegment.reply(message_id) + '上传成功'
+            'message': MessageSegment.reply(message_id) + '保存成功'
         })
-    await record.finish('上传会话已结束')
 
 
 record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
@@ -284,7 +269,7 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
     if '怎么用' not in raw_msg and '如何' not in raw_msg:
         await record_help.finish()
 
-    msg = '''您可以通过at我+上传, 开启上传语录通道; 再发送图片上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。'''
+    msg = '''您可以通过回复指定图片, 发送【上传】指令上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。'''
 
     if 'group' in session_id:
         tmpList = session_id.split('_')
@@ -372,7 +357,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
 
     await alltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
-addtag = on_regex(pattern="^{}addtag\ ".format(plugin_config.quote_startcmd), **need_at)
+addtag = on_regex(pattern="^{}addtag\ ".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -406,7 +391,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
+deltag = on_regex(pattern="^{}deltag\ ".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):
@@ -439,7 +424,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
     await deltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-make_record = on_regex(pattern="^{}记录$".format(plugin_config.quote_startcmd))
+make_record = on_regex(pattern="^{}记录$".format(re.escape(plugin_config.quote_startcmd)))
 
 @make_record.handle()
 async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
@@ -456,7 +441,7 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
     if event.reply:
         size = 640
         qqid = event.reply.sender.user_id
-        raw_message = event.reply.message.extract_plain_text()
+        raw_message = event.reply.message.extract_plain_text().strip()
         card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
         session_id = event.get_session_id()
     else:
@@ -524,7 +509,7 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
         await make_record.send('空内容')
     await make_record.finish()
 
-render_quote = on_regex(pattern="^{}生成$".format(plugin_config.quote_startcmd))
+render_quote = on_regex(pattern="^{}生成$".format(re.escape(plugin_config.quote_startcmd)))
 
 @render_quote.handle()
 async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
@@ -541,7 +526,7 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
     if event.reply:
         size = 640
         qqid = event.reply.sender.user_id
-        raw_message = event.reply.message.extract_plain_text()
+        raw_message = event.reply.message.extract_plain_text().strip()
         card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
         session_id = event.get_session_id()
     else:
@@ -582,90 +567,10 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
 
     await render_quote.finish()
 
-save_img = on_regex(pattern="^{}保存$".format(re.escape(plugin_config.quote_startcmd)))
-
-@save_img.handle()
-async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
-
-    session_id = event.get_session_id()
-    message_id = event.message_id
-
-    global inverted_index
-    global record_dict
-    global forward_index
-
-    if event.reply:
-        raw_message = str(event.reply.message)
-        match = re.search(r'file=([^,]+)', raw_message)
-        if match:
-            file_name = match.group(1).strip('"\'')
-        else:
-            await make_record.finish("未检测到图片")
-    else:
-        await make_record.finish("请回复所需的图片消息")
-
-    try:
-        resp = await bot.call_api('get_image', **{'file': file_name})
-        image_path = resp['file']
-        shutil.copy(image_path, os.path.join(quote_path, os.path.basename(image_path)))
-    
-    except Exception as e:
-        logger.warning(f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}")
-        async with httpx.AsyncClient() as client:
-            image_url = msg['image'][0].data['url']
-            response = await client.get(image_url)
-            if response.status_code == 200:
-                random_filename = f"{uuid.uuid4().hex}.png"
-                image_path = os.path.join(quote_path, random_filename)
-                with open(image_path, "wb") as f:
-                    f.write(response.content)
-                resp = {"file": image_path}
-            else:
-                raise Exception("httpx 下载失败")
-    
-    image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
-    logger.info(f"图片已保存到 {image_path}")
-    # OCR分词
-    # 初始化PaddleOCR
-    ocr = PaddleOCR(use_angle_cls=True, lang='ch')
-    try:
-        # 使用PaddleOCR进行OCR识别
-        ocr_result = ocr.ocr(image_path, cls=True)
-        # 处理OCR识别结果
-        ocr_content = ''
-        for line in ocr_result:
-            for word in line:
-                ocr_content += word[1][0] + ' '
-    except Exception as e:
-        ocr_content = ''
-        print(f"OCR识别失败: {e}")
 
 
-    if 'group' in session_id:
-        tmpList = session_id.split('_')
-        groupNum = tmpList[1]
 
-        inverted_index, forward_index = offer(groupNum, image_path, ocr_content, inverted_index, forward_index)
-
-        if groupNum not in record_dict:
-            record_dict[groupNum] = [image_path]
-        else:
-            if image_path not in record_dict[groupNum]:
-                record_dict[groupNum].append(image_path)
-
-
-        with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
-            json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
-
-        with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
-            json.dump(inverted_index, fc, indent=2, separators=(',', ': '), ensure_ascii=False)
-
-    await bot.call_api('send_group_msg', **{
-            'group_id': int(groupNum),
-            'message': MessageSegment.reply(message_id) + '保存成功'
-        })
-
-script_batch = on_regex(pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at)
+script_batch = on_regex(pattern="^{}batch_upload".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @script_batch.handle()
 async def script_batch_handle(bot: Bot, event: Event, state: T_State):
@@ -771,7 +676,7 @@ tags=aaa bbb ccc'''
     await bot.send_msg(group_id=int(groupNum), message='批量导入完成')
     await script_batch.finish()
 
-copy_batch = on_regex(pattern="^{}batch_copy".format(plugin_config.quote_startcmd), **need_at)
+copy_batch = on_regex(pattern="^{}batch_copy".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @copy_batch.handle()
 async def copy_batch_handle(bot: Bot, event: Event, state: T_State):

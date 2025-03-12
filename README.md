@@ -43,8 +43,6 @@ _✨ QQ群聊 语录库 ✨_
 
 以**上传**指令回复图片消息，即可直接将图片上传至语录库中。
 
-以图片的形式发送聊天语录，即可将语录上传至语录库中。
-
 <img src="https://github.com/RongRongJi/nonebot_plugin_quote/raw/main/screenshot/upload.jpg" width="40%" />
 
 

@@ -442,7 +442,7 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
         size = 640
         qqid = event.reply.sender.user_id
         raw_message = event.reply.message.extract_plain_text().strip()
-        card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
+        card = event.reply.sender.card if event.reply.sender.card not in (None, '') else event.reply.sender.nickname
         session_id = event.get_session_id()
     else:
         await make_record.finish("请回复所需的消息")
@@ -527,7 +527,7 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
         size = 640
         qqid = event.reply.sender.user_id
         raw_message = event.reply.message.extract_plain_text().strip()
-        card = event.reply.sender.card if event.reply.sender.card != '' else event.reply.sender.nickname
+        card = event.reply.sender.card if event.reply.sender.card not in (None, '') else event.reply.sender.nickname
         session_id = event.get_session_id()
     else:
         await make_record.finish("请回复所需的消息")

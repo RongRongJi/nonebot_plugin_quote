@@ -18,9 +18,6 @@ permissions:
 jobs:
   release-build:
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/manage/project/nonebot-plugin-quote/
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +31,6 @@ jobs:
           # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
-
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
@@ -54,7 +50,7 @@ jobs:
     environment:
       name: pypi
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
+      url: https://pypi.org/manage/project/nonebot-plugin-quote/
       #
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
@@ -71,5 +67,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}

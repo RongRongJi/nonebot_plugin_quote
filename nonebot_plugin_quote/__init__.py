@@ -23,7 +23,7 @@ import hashlib
 import uuid
 from .make_image import generate_quote_image
 
-# v0.4.0
+# v0.4.2
 
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
@@ -35,7 +35,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         'author': 'RongRongJi',
-        'version': 'v0.4.0',
+        'version': 'v0.4.2',
     },
 )
 
@@ -55,6 +55,7 @@ author_font_path = plugin_config.author_font_path
 if quote_path == 'quote':
     quote_path = './data'
     logger.warning('未配置quote文件路径，使用默认配置: ./data')
+os.makedirs(quote_path, exist_ok=True)
 
 if not check_font(font_path, author_font_path):
     logger.warning('未配置字体路径，部分功能无法使用')
@@ -110,6 +111,11 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
         if msg_part['type'] == 'image':
             image_found = True
             file_name = msg_part['data']['file']
+            if file_name.startswith('http'):
+                raw_filename = msg_part['data'].get('filename', 'image.jpg').upper()
+                name, _ = os.path.splitext(raw_filename)
+                file_name = name + ".png"
+                break
             image_info = await bot.call_api('get_image', file=file_name)
             file_name = os.path.basename(image_info['file'])
             break
@@ -134,6 +140,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     global record_dict
     global forward_index
 
+    print(event.reply.message)
     if event.reply:
         raw_message = str(event.reply.message)
         match = re.search(r'file=([^,]+)', raw_message)
@@ -151,12 +158,14 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     
     except Exception as e:
         logger.warning(f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}")
+        image_url = file_name
+        match = re.search(r'filename=([^,]+)', raw_message)
+        file_name = match.group(1).strip('"\'')
         async with httpx.AsyncClient() as client:
-            image_url = msg['image'][0].data['url']
+            image_url = image_url.replace('&amp;', '&')
             response = await client.get(image_url)
             if response.status_code == 200:
-                random_filename = f"{uuid.uuid4().hex}.png"
-                image_path = os.path.join(quote_path, random_filename)
+                image_path = os.path.join(quote_path, file_name)
                 with open(image_path, "wb") as f:
                     f.write(response.content)
                 resp = {"file": image_path}

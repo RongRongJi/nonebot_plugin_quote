@@ -282,10 +282,11 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 解决event.reply.sender.card返回None而非空字符串的识别错误
 - 由于最新的Pillow依赖移除了部分方法，因此本项目限定Pillow版本
 
+### v0.4.2 (2025/5/29)
+
+- 适配lagrange框架
 
 </details>
-
-
 
 ## 🎉 鸣谢
 

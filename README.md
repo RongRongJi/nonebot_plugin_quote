@@ -277,6 +277,11 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 
 - 将上传功能进行改版，直接回复图片上传语录，感谢[Pigz2538](https://github.com/pigz2538)提交
 
+### v0.4.1 (2025/5/28)
+
+- 解决event.reply.sender.card返回None而非空字符串的识别错误
+- 由于最新的Pillow依赖移除了部分方法，因此本项目限定Pillow版本
+
 
 </details>
 

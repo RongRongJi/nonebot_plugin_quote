@@ -13,11 +13,14 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  id-token: write
 
 jobs:
   release-build:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/manage/project/nonebot-plugin-quote/
 
     steps:
       - uses: actions/checkout@v4

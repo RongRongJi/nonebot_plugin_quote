@@ -15,7 +15,7 @@ nonebot-adapter-onebot = "^2.2.1"
 paddleocr = "^2.9.1"
 paddlepaddle = "^2.6.2"
 setuptools = "^75.3.0"
-httpx = "^0.27.2"
+httpx = ">=0.27.2"
 pillow = ">=11.1,<11.2"
 emoji = "^2.14"
 

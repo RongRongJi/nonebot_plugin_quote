@@ -142,7 +142,7 @@ nb plugin install nonebot-plugin-quote
 | RECORD_PATH | 否 | 'record.json' | 必要的json文件路径, 示例"/data/record.json" |
 | INVERTED_INDEX_PATH | 否 | 'inverted_index.json' | 必要的json文件路径, 示例"/data/inverted_index.json" |
 | QUOTE_SUPERUSER | 否 | 空字典 | 白名单字典(分群) |
-| GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录) |
+| GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录，SUPERUSERS内用户无需重复填写) |
 | QUOTE_NEEDAT | 否 | True | 是否需要at机器人(开启上传通道必须at) |
 | QUOTE_STARTCMD | 否 | '' | 增加指令前缀 |
 
@@ -285,6 +285,10 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ### v0.4.2 (2025/5/29)
 
 - 适配lagrange框架
+
+### v0.4.3 (2025/8/13)
+
+- 兼容nonebot的 `SUPERUSERS`（可以少写一个配置项了）
 
 </details>
 

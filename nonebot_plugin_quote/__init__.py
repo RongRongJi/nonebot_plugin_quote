@@ -23,7 +23,7 @@ import hashlib
 import uuid
 from .make_image import generate_quote_image
 
-# v0.4.2
+# v0.4.3
 
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
@@ -35,11 +35,12 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         'author': 'RongRongJi',
-        'version': 'v0.4.2',
+        'version': 'v0.4.3',
     },
 )
 
 plugin_config = Config.parse_obj(get_driver().config.dict())
+plugin_config.global_superuser = list({*plugin_config.global_superuser, *plugin_config.superusers})
 
 need_at = {}
 if (plugin_config.quote_needat):
@@ -291,8 +292,7 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
 
     await record_help.finish()
 
-
-delete_record = on_command('{}删除'.format(plugin_config.quote_startcmd), aliases={'delete'}, **need_at)
+delete_record = on_regex(pattern=r'^{}删除$'.format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @delete_record.handle()
 async def delete_record_handle(bot: Bot, event: Event, state: T_State):

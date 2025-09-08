@@ -18,6 +18,7 @@ setuptools = "^75.3.0"
 httpx = ">=0.27.2"
 pillow = ">=11.1,<11.2"
 emoji = "^2.14"
+nonebot-plugin-session = "^0.3.2"
 
 [build-system]
 requires = ["poetry-core"]

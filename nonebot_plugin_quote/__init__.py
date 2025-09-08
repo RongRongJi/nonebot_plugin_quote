@@ -5,6 +5,7 @@ from nonebot.params import Arg, ArgPlainText, CommandArg
 from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
 from nonebot.typing import T_State  
 from nonebot.plugin import PluginMetadata
+from nonebot_plugin_session import EventSession
 import re
 import json
 import random
@@ -132,7 +133,7 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
 save_img = on_regex(pattern="^{}上传$".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @save_img.handle()
-async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
+async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
 
     session_id = event.get_session_id()
     message_id = event.message_id
@@ -192,12 +193,11 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
 
 
     if 'group' in session_id:
-        tmpList = session_id.split('_')
-        groupNum = tmpList[1]
+        groupNum = Session.id2
 
         inverted_index, forward_index = offer(groupNum, image_path, ocr_content, inverted_index, forward_index)
 
-        if groupNum not in record_dict:
+        if groupNum not in list(record_dict.keys()):
             record_dict[groupNum] = [image_path]
         else:
             if image_path not in record_dict[groupNum]:
@@ -219,7 +219,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
 record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
 
 @record_pool.handle()
-async def record_pool_handle(bot: Bot, event: Event, state: T_State):
+async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: EventSession):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
@@ -232,11 +232,10 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
         search_info = str(event.get_message()).strip()
         search_info = search_info.replace('{}语录'.format(plugin_config.quote_startcmd), '').replace(' ', '')
 
-        tmpList = session_id.split('_')
-        groupNum = tmpList[1]
+        groupNum = Session.id2
 
         if search_info == '':
-            if groupNum not in record_dict:
+            if groupNum not in list(record_dict.keys()):
                 msg = '当前无语录库'
             else:
                 length = len(record_dict[groupNum])
@@ -248,7 +247,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
             if ret['status'] == -1:
                 msg = '当前无语录库'
             elif ret['status'] == 2:
-                if groupNum not in record_dict:
+                if groupNum not in list(record_dict.keys()):
                     msg = '当前无语录库'
                 else:
                     length = len(record_dict[groupNum])
@@ -271,7 +270,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
 record_help = on_keyword({"语录"}, priority=10, rule=to_me())
 
 @record_help.handle()
-async def record_help_handle(bot: Bot, event: Event, state: T_State):
+async def record_help_handle(bot: Bot, event: Event, state: T_State, Session: EventSession):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
@@ -282,8 +281,7 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State):
     msg = '''您可以通过回复指定图片, 发送【上传】指令上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。'''
 
     if 'group' in session_id:
-        tmpList = session_id.split('_')
-        groupNum = tmpList[1]
+        groupNum = Session.id2
 
         await bot.call_api('send_group_msg', **{
             'group_id': int(groupNum),
@@ -436,7 +434,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
 make_record = on_regex(pattern="^{}记录$".format(re.escape(plugin_config.quote_startcmd)))
 
 @make_record.handle()
-async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
+async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
 
     if not check_font(font_path, author_font_path):
         # 字体没配置就返回
@@ -492,12 +490,11 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State):
                 file.write(img_data)
 
             if 'group' in session_id:
-                tmpList = session_id.split('_')
-                groupNum = tmpList[1]
+                        groupNum = Session.id2
 
                 inverted_index, forward_index = offer(groupNum, image_path, card + ' ' + raw_message, inverted_index, forward_index)
 
-                if groupNum not in record_dict:
+                if groupNum not in list(record_dict.keys()):
                     record_dict[groupNum] = [image_path]
                 else:
                     if image_path not in record_dict[groupNum]:

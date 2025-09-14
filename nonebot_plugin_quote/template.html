@@ -64,9 +64,6 @@ body {
     font-size: 14px;
     color: #333;
     font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .level {
@@ -78,8 +75,6 @@ body {
     align-items: center;
     height: 20px;
     line-height: 1;
-    white-space: nowrap;
-    flex-shrink: 0; 
 }
 
 .level.member {
@@ -117,7 +112,7 @@ body {
     padding: 10px 14px;
     background: #fff;
     border-radius: 12px;
-    min-width: fit-content; 
+    min-width: fit-content;
     width: fit-content;
     max-width: 100%;
     word-wrap: break-word;
@@ -125,6 +120,15 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     line-height: 1.4;
 }
+
+.message-text img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 1px;
+    margin-bottom: 4px;
+}
+
 </style>
 </head>
 <body>

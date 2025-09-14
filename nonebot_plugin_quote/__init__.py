@@ -2,7 +2,7 @@ from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
 from nonebot.adapters import Message
 from nonebot.params import Arg, ArgPlainText, CommandArg
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception, GroupMessageEvent
 from nonebot.typing import T_State  
 from nonebot.plugin import PluginMetadata
 from nonebot_plugin_session import EventSession
@@ -124,30 +124,21 @@ forward_index = inverted2forward(inverted_index)
 
 
 # 回复信息处理
-async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
-    if 'reply' not in raw_message:
+async def reply_handle(bot, errMsg, event_model: json, groupNum, user_id, listener):
+    try:
+        event_reply = event_model['reply']
+    except:
         await bot.call_api('send_group_msg', **{
             'group_id': int(groupNum),
             'message': '[CQ:at,qq=' + user_id + ']' + errMsg
         })
         await listener.finish()
 
-    # reply之后第一个等号，到数字后第一个非数字
-    idx = raw_message.find('reply')
-    reply_id = ''
-    for i in range(idx, len(raw_message)):
-        if raw_message[i] == '=':
-            idx = i
-            break
-    for i in range(idx + 1, len(raw_message)):
-        if raw_message[i] != '-' and not raw_message[i].isdigit():
-            break
-        reply_id += raw_message[i]
+    # reply_id = event_reply["message_id"]
 
-    resp = await bot.get_msg(message_id=reply_id)
-    img_msg = resp['message']
+    # resp = await bot.get_msg(message_id=reply_id)
+    img_msg = event_model['reply']['message']
 
-    # 检查消息中是否包含图片
     image_found = False
     for msg_part in img_msg:
         if msg_part['type'] == 'image':
@@ -173,7 +164,7 @@ async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
 save_img = on_regex(pattern="^{}上传$".format(re.escape(plugin_config.quote_startcmd)), **need_at)
 
 @save_img.handle()
-async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
+async def save_img_handle(bot: Bot, event: GroupMessageEvent, state: T_State, Session: EventSession):
 
     session_id = event.get_session_id()
     message_id = event.message_id
@@ -232,23 +223,22 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State, Session
         logger.error(f"OCR识别失败: {e}")
 
 
-    if 'group' in session_id:
-        groupNum = Session.id2
+    groupNum = Session.id2
 
-        inverted_index, forward_index = offer(groupNum, image_name, ocr_content, inverted_index, forward_index)
+    inverted_index, forward_index = offer(groupNum, image_name, ocr_content, inverted_index, forward_index)
 
-        if groupNum not in list(record_dict.keys()):
-            record_dict[groupNum] = [image_name]
-        else:
-            if image_name not in record_dict[groupNum]:
-                record_dict[groupNum].append(image_name)
+    if groupNum not in list(record_dict.keys()):
+        record_dict[groupNum] = [image_name]
+    else:
+        if image_name not in record_dict[groupNum]:
+            record_dict[groupNum].append(image_name)
 
 
-        with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
-            json.dump(record_dict, f, indent=4, ensure_ascii=False)
+    with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+        json.dump(record_dict, f, indent=4, ensure_ascii=False)
 
-        with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
-            json.dump(inverted_index, fc, indent=4, ensure_ascii=False)
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+        json.dump(inverted_index, fc, indent=4, ensure_ascii=False)
 
     await bot.call_api('send_group_msg', **{
             'group_id': int(groupNum),
@@ -259,7 +249,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State, Session
 record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
 
 @record_pool.handle()
-async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: EventSession):
+async def record_pool_handle(bot: Bot, event: GroupMessageEvent, state: T_State, Session: EventSession):
 
     ats = False
 
@@ -269,70 +259,70 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
     global inverted_index
     global record_dict
 
-    if 'group' in session_id:
+    search_info = str(event.get_message()).strip()
+    search_info = search_info.replace('{}语录'.format(plugin_config.quote_startcmd), '').replace(' ', '')
 
-        search_info = str(event.get_message()).strip()
-        search_info = search_info.replace('{}语录'.format(plugin_config.quote_startcmd), '').replace(' ', '')
+    groupNum = Session.id2
 
-        groupNum = Session.id2
+    for i in event.model_dump()['original_message']:
+        if i['type'] == 'at':
+            ats = i['data']['qq']
+            break
 
-        for i in event.model_dump()['original_message']:
-            if i['type'] == 'at':
-                ats = i['data']['qq']
-                break
+    if ats:
+        try:
+            target_ats_list = []
+            for i in record_dict[groupNum]:
+                if i.startswith(f"{ats}_"):
+                    target_ats_list.append(i)
+            length = len(target_ats_list)
+            idx = random.randint(0, length - 1)
+            msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(target_ats_list[idx]))))
+        except:
+            length = len(record_dict[groupNum])
+            idx = random.randint(0, length - 1)
+            msg = '当前查询无结果, 为您随机发送。'
+            msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
+            msg = msg + msg_segment
 
-        if ats:
-            try:
-                target_ats_list = []
-                for i in record_dict[groupNum]:
-                    if i.startswith(f"{ats}_"):
-                        target_ats_list.append(i)
-                length = len(target_ats_list)
-                idx = random.randint(0, length - 1)
-                msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(target_ats_list[idx]))))
-            except:
-                length = len(record_dict[groupNum])
-                idx = random.randint(0, length - 1)
-                msg = '当前查询无结果, 为您随机发送。'
-                msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
-                msg = msg + msg_segment
+    elif search_info == '':
+        if groupNum not in list(record_dict.keys()):
+            msg = '当前无语录库'
+        else:
+            length = len(record_dict[groupNum])
+            idx = random.randint(0, length - 1)
+            msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
+    else:
+        ret = query(search_info, groupNum, inverted_index)
 
-        elif search_info == '':
+        if ret['status'] == -1:
+            msg = '当前无语录库'
+        elif ret['status'] == 2:
             if groupNum not in list(record_dict.keys()):
                 msg = '当前无语录库'
             else:
                 length = len(record_dict[groupNum])
                 idx = random.randint(0, length - 1)
-                msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
+                msg = '当前查询无结果, 为您随机发送。'
+                msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
+                msg = MessageSegment.text(msg) + msg_segment
+        elif ret['status'] == 1:
+            msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(ret['msg']))))
         else:
-            ret = query(search_info, groupNum, inverted_index)
+            msg = ret.text
 
-            if ret['status'] == -1:
-                msg = '当前无语录库'
-            elif ret['status'] == 2:
-                if groupNum not in list(record_dict.keys()):
-                    msg = '当前无语录库'
-                else:
-                    length = len(record_dict[groupNum])
-                    idx = random.randint(0, length - 1)
-                    msg = '当前查询无结果, 为您随机发送。'
-                    msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
-            elif ret['status'] == 1:
-                msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(ret['msg']))))
-            else:
-                msg = ret.text
+    response = await bot.call_api('send_group_msg', **{
+        'group_id': int(groupNum),
+        'message': msg
+    })
 
-        response = await bot.call_api('send_group_msg', **{
-            'group_id': int(groupNum),
-            'message': msg
-        })
     await record_pool.finish()
 
 
 record_help = on_keyword({"语录"}, priority=10, rule=to_me())
 
 @record_help.handle()
-async def record_help_handle(bot: Bot, event: Event, state: T_State, Session: EventSession):
+async def record_help_handle(bot: Bot, event: GroupMessageEvent, state: T_State, Session: EventSession):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
@@ -342,13 +332,13 @@ async def record_help_handle(bot: Bot, event: Event, state: T_State, Session: Ev
 
     msg = ''' 您可以通过回复指定图片, 发送【上传】指令上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。'''
 
-    if 'group' in session_id:
-        groupNum = Session.id2
+    # if 'group' in session_id:
+    groupNum = Session.id2
 
-        await bot.call_api('send_group_msg', **{
-            'group_id': int(groupNum),
-            'message': MessageSegment.at(user_id) + msg
-        })
+    await bot.call_api('send_group_msg', **{
+        'group_id': int(groupNum),
+        'message': MessageSegment.at(user_id) + msg
+    })
 
     await record_help.finish()
 
@@ -376,10 +366,8 @@ async def delete_record_handle(bot: Bot, event: Event, state: T_State):
             })
             await delete_record.finish()
 
-    raw_message = str(event)
-
     errMsg = ' 请回复需要删除的语录, 并输入删除指令'
-    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, delete_record)
+    imgs = await reply_handle(bot, errMsg, event.model_dump(), groupNum, user_id, delete_record)
     
     # 搜索
     is_Delete, record_dict, inverted_index, forward_index = delete(imgs, groupNum, record_dict, inverted_index, forward_index)
@@ -412,10 +400,9 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
         await alltag.finish()
 
     groupNum = session_id.split('_')[1]
-    raw_message = str(event)
 
     errMsg = ' 请回复需要指定语录'
-    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, alltag)  
+    imgs = await reply_handle(bot, errMsg, event.model_dump(), groupNum, user_id, alltag)  
     tags = findAlltag(imgs, forward_index, groupNum)
     if tags is None:
         msg = ' 该语录不存在'
@@ -443,10 +430,9 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
         await addtag.finish()
 
     groupNum = session_id.split('_')[1]
-    raw_message = str(event)
 
     errMsg = ' 请回复需要指定语录'
-    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, addtag)
+    imgs = await reply_handle(bot, errMsg, event.model_dump(), groupNum, user_id, addtag)
 
     flag, forward_index, inverted_index = addTag(tags, imgs, groupNum, forward_index, inverted_index)
     with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
@@ -477,10 +463,9 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
         await deltag.finish()
 
     groupNum = session_id.split('_')[1]
-    raw_message = str(event)
 
     errMsg = ' 请回复需要指定语录'
-    imgs = await reply_handle(bot, errMsg, raw_message, groupNum, user_id, deltag)
+    imgs = await reply_handle(bot, errMsg, event.model_dump(), groupNum, user_id, deltag)
 
     flag, forward_index, inverted_index = delTag(tags, imgs, groupNum, forward_index, inverted_index)
     with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
@@ -496,7 +481,7 @@ async def deltag_handle(bot: Bot, event: Event, state: T_State):
 make_record = on_regex(pattern="^{}记录$".format(re.escape(plugin_config.quote_startcmd)))
 
 @make_record.handle()
-async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
+async def make_record_handle(bot: Bot, event: GroupMessageEvent, state: T_State, Session: EventSession):
 
     groupNum = Session.id2
 
@@ -521,7 +506,7 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
     if str(qqid) == str(event.get_user_id()):
         await make_record.finish(" 不能记录自己的消息")
 
-    if raw_message:
+    if len(event.model_dump()['reply']['message']) != 0:
 
         url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s={size}"
 
@@ -545,9 +530,18 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
         if data:
             image_file = io.BytesIO(data)
             if plugin_config.emulating_native_qq_style:
-                img_data = await generate_emulating_native_qq_style_image(int(qqid), int(groupNum), f"file:///{emulating_font_path}",  raw_message, bot)
+                msglist = []
+                for i in event.model_dump()['reply']['message']:
+                    if i["type"] == "text":
+                        msglist.append([i["type"], i["data"]["text"]])
+                    elif i["type"] == "image":
+                        msglist.append([i["type"], f'<img src="{i["data"]["url"]}" alt="image">'])
+                img_data = await generate_emulating_native_qq_style_image(int(qqid), int(groupNum), f"file:///{emulating_font_path}",  msglist, bot)
             else:
-                img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+                if raw_message:
+                    img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+                else:
+                    await make_record.send('空内容')
 
             image_name = f"{qqid}_{hashlib.md5(img_data).hexdigest()}.png"
 
@@ -577,8 +571,8 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
                 'group_id': int(groupNum),
                 'message': msg
             })
-    else:
-        await make_record.send('空内容')
+        else:
+            await make_record.send('空内容')
     await make_record.finish()
 
 render_quote = on_regex(pattern="^{}生成$".format(re.escape(plugin_config.quote_startcmd)))
@@ -586,7 +580,7 @@ render_quote = on_regex(pattern="^{}生成$".format(re.escape(plugin_config.quot
 @render_quote.handle()
 async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
 
-    group_id = Session.id2
+    groupNum = Session.id2
 
     if not check_font(font_path, author_font_path, emulating_font_path):
         # 字体没配置就返回
@@ -606,44 +600,72 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State, Ses
     else:
         await make_record.finish(" 请回复所需的消息")
 
-    if raw_message:
+    url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s={size}"
 
-        url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s={size}"
+    async def download_url(url: str) -> bytes:
+        async with httpx.AsyncClient() as client:
+            for i in range(3):
+                try:
+                    resp = await client.get(url, timeout=10)
+                    resp.raise_for_status()
+                    return resp.content
+                except Exception as e:
+                    logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
+                    await asyncio.sleep(3)
+        raise NetworkError(f"{url} 下载失败！")
 
-        async def download_url(url: str) -> bytes:
-            async with httpx.AsyncClient() as client:
-                for i in range(3):
-                    try:
-                        resp = await client.get(url, timeout=10)
-                        resp.raise_for_status()
-                        return resp.content
-                    except Exception as e:
-                        logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
-                        await asyncio.sleep(3)
-            raise NetworkError(f"{url} 下载失败！")
-
+    data = await download_url(url)
+    if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
+        url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s=100"
         data = await download_url(url)
-        if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
-            url = f"http://q1.qlogo.cn/g?b=qq&nk={qqid}&s=100"
-            data = await download_url(url)
 
-        if data:
-            if plugin_config.emulating_native_qq_style:
-                img_data = await generate_emulating_native_qq_style_image(int(qqid), int(group_id), f"file:///{emulating_font_path}",  raw_message, bot)
-            else:
-                image_file = io.BytesIO(data)
+    if data:
+        image_file = io.BytesIO(data)
+        if plugin_config.emulating_native_qq_style:
+            msglist = []
+            for i in event.model_dump()['reply']['message']:
+                if i["type"] == "text":
+                    msglist.append([i["type"], i["data"]["text"]])
+                elif i["type"] == "image":
+                    msglist.append([i["type"], f'<img src="{i["data"]["url"]}" alt="image">'])
+            img_data = await generate_emulating_native_qq_style_image(int(qqid), int(groupNum), f"file:///{emulating_font_path}",  msglist, bot)
+        else:
+            if raw_message:
                 img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
-            
-            msg = MessageSegment.image(img_data)
-            response = await bot.call_api('send_group_msg', **{
-                'group_id': int(group_id),
-                'message': msg
-            })
+            else:
+                await make_record.send('空内容')
+
+        image_name = f"{qqid}_{hashlib.md5(img_data).hexdigest()}.png"
+
+        image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_name)))
+
+        with open(image_path, "wb") as file:
+            file.write(img_data)
+
+        if 'group' in session_id:
+
+            inverted_index, forward_index = offer(groupNum, image_name, card + ' ' + raw_message, inverted_index, forward_index)
+
+            if groupNum not in list(record_dict.keys()):
+                record_dict[groupNum] = [image_name]
+            else:
+                if image_name not in record_dict[groupNum]:
+                    record_dict[groupNum].append(image_name)
+
+            with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+                json.dump(record_dict, f, indent=4, ensure_ascii=False)
+
+            with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
+                json.dump(inverted_index, fc, indent=4, ensure_ascii=False)
+
+        msg = MessageSegment.image(img_data)
+        response = await bot.call_api('send_group_msg', **{
+            'group_id': int(groupNum),
+            'message': msg
+        })
     else:
-        await render_quote.send('空内容')
-
-    await render_quote.finish()
-
+        await make_record.send('空内容')
+    await make_record.finish()
 
 
 

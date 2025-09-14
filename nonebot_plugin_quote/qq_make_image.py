@@ -19,6 +19,7 @@ async def generate_emulating_native_qq_style_image(userid: int, groupid: int, fo
                 "level": int(response['level']),
                 "user_type": response['role'],
                 "avatar": f"https://q.qlogo.cn/g?b=qq&nk={userid}&s=640",
+                "title": response['title']
                 "message": ""
             }
         ],

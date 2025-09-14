@@ -77,33 +77,16 @@ body {
     line-height: 1;
 }
 
-.level.member {
-    background-color: #E2E2E2;
-    color: #a2a2a2;
-}
-
 .level.admin {
     background-color: #CEEEEB;
     color: #82C1B0;
     padding-right: 6px;
 }
 
-.level.admin::after {
-    content: "管理员";
-    margin-left: 2px;
-    font-size: 12px;
-}
-
 .level.owner {
     background-color: #F5DDCB;
     color: #FF9B3B;
     padding-right: 6px;
-}
-
-.level.owner::after {
-    content: "群主";
-    margin-left: 2px;
-    font-size: 12px;
 }
 
 .message-text {
@@ -140,13 +123,23 @@ body {
             <div class="message-block">
                 <div class="username-level">
                     <span class="username">{{ msg.username }}</span>
+
                     {% if msg.user_type == 'member' %}
-                        <span class="level member">LV{{ msg.level }}</span>
+                        <span class="level member"
+                              style="background-color: {% if msg.title %}#e4daf3{% else %}#E2E2E2{% endif %};
+                                     color: {% if msg.title %}#b589f6{% else %}#a2a2a2{% endif %};">
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% endif %}
+                        </span>
                     {% elif msg.user_type == 'admin' %}
-                        <span class="level admin">LV{{ msg.level }}</span>
+                        <span class="level admin">
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% else %} 管理员{% endif %}
+                        </span>
                     {% elif msg.user_type == 'owner' %}
-                        <span class="level owner">LV{{ msg.level }}</span>
+                        <span class="level owner">
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% else %} 群主{% endif %}
+                        </span>
                     {% endif %}
+
                 </div>
                 <div class="message-text">{{ msg.message.replace('\n', '<br>') | safe }}</div>
             </div>

@@ -23,6 +23,7 @@ import httpx
 import hashlib
 import uuid
 from .make_image import generate_quote_image
+from .qq_make_image import generate_emulating_native_qq_style_image
 
 # v0.4.3
 
@@ -51,7 +52,8 @@ record_dict = {}
 inverted_index = {}
 quote_path = plugin_config.quote_path
 font_path = plugin_config.font_path
-author_font_path = plugin_config.author_font_path 
+author_font_path = plugin_config.author_font_path
+emulating_font_path = plugin_config.emulating_font_path
 
 # 判断参数配置情况
 if quote_path == 'quote':
@@ -59,8 +61,14 @@ if quote_path == 'quote':
     logger.warning('未配置quote文件路径，使用默认配置: ./data')
 os.makedirs(quote_path, exist_ok=True)
 
-if not check_font(font_path, author_font_path):
+if not check_font(font_path, author_font_path, emulating_font_path):
     logger.warning('未配置字体路径，部分功能无法使用')
+
+if plugin_config.emulating_native_qq_style:
+    logger.info("已启用仿QQ样式，语录默认以仿QQ样式记录")
+else:
+    logger.info("未启用仿QQ样式，语录默认以旧方式记录")
+
     
 # 首次运行时导入表
 try:
@@ -286,7 +294,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
                 length = len(record_dict[groupNum])
                 idx = random.randint(0, length - 1)
                 msg = '当前查询无结果, 为您随机发送。'
-                msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
+                msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
                 msg = msg + msg_segment
 
         elif search_info == '':
@@ -309,7 +317,6 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
                     idx = random.randint(0, length - 1)
                     msg = '当前查询无结果, 为您随机发送。'
                     msg_segment = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
-                    msg = msg + msg_segment
             elif ret['status'] == 1:
                 msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(ret['msg']))))
             else:
@@ -491,7 +498,9 @@ make_record = on_regex(pattern="^{}记录$".format(re.escape(plugin_config.quote
 @make_record.handle()
 async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
 
-    if not check_font(font_path, author_font_path):
+    groupNum = Session.id2
+
+    if not check_font(font_path, author_font_path, emulating_font_path):
         # 字体没配置就返回
         logger.warning('未配置字体路径，部分功能无法使用')
         await make_record.finish()
@@ -535,7 +544,10 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
 
         if data:
             image_file = io.BytesIO(data)
-            img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+            if plugin_config.emulating_native_qq_style:
+                img_data = await generate_emulating_native_qq_style_image(int(qqid), int(groupNum), f"file:///{emulating_font_path}",  raw_message, bot)
+            else:
+                img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
 
             image_name = f"{qqid}_{hashlib.md5(img_data).hexdigest()}.png"
 
@@ -545,7 +557,6 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
                 file.write(img_data)
 
             if 'group' in session_id:
-                groupNum = Session.id2
 
                 inverted_index, forward_index = offer(groupNum, image_name, card + ' ' + raw_message, inverted_index, forward_index)
 
@@ -575,7 +586,7 @@ render_quote = on_regex(pattern="^{}生成$".format(re.escape(plugin_config.quot
 @render_quote.handle()
 async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
 
-    if not check_font(font_path, author_font_path):
+    if not check_font(font_path, author_font_path, emulating_font_path):
         # 字体没配置就返回
         logger.warning('未配置字体路径，部分功能无法使用')
         await make_record.finish()

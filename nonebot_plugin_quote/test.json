@@ -1,0 +1,71 @@
+{
+    "time": 1757819598,
+    "self_id": 2650167109,
+    "post_type": "message",
+    "sub_type": "normal",
+    "user_id": 1293945058,
+    "message_type": "group",
+    "message_id": 621890218,
+    "message": [
+        {
+            "type": "text",
+            "data": {
+                "text": "语录"
+            }
+        },
+        {
+            "type": "at",
+            "data": {
+                "qq": "2781826578",
+                "name": "AL-1S(CPU负载: 12.7%) "
+            }
+        },
+        {
+            "type": "text",
+            "data": {
+                "text": " "
+            }
+        }
+    ],
+    "original_message": [
+        {
+            "type": "text",
+            "data": {
+                "text": "语录"
+            }
+        },
+        {
+            "type": "at",
+            "data": {
+                "qq": "2781826578",
+                "name": "AL-1S (CPU负载: 12.7%) "
+            }
+        },
+        {
+            "type": "text",
+            "data": {
+                "text": " "
+            }
+        }
+    ],
+    "raw_message": "语录[CQ:at,qq=2781826578,name=AL-1S (CPU负载: 12.7%) ] ",
+    "font": 14,
+    "sender": {
+        "user_id": 1293945058,
+        "nickname": "barryblueice",
+        "sex": null,
+        "age": null,
+        "card": "",
+        "area": null,
+        "level": null,
+        "role": "owner",
+        "title": ""
+    },
+    "to_me": false,
+    "reply": null,
+    "group_id": 965313024,
+    "anonymous": null,
+    "message_seq": 8757,
+    "message_format": "array",
+    "group_name": "测试"
+}

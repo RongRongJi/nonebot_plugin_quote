@@ -55,6 +55,17 @@ def query(sentence, group_id, inverted_index):
     return {'status': 1, 'msg': result_pool[idx]}
 
 
+def _remove(arr, ele):
+    old_len = len(arr)
+    for name in arr:
+        file_name = os.path.basename(name)
+        if file_name.endswith(ele):
+            arr.remove(name)
+            break
+    
+    return len(arr) < old_len
+
+
 # 删除内容
 def delete(img_name, group_id, record, inverted_index, forward_index):
     check = False
@@ -71,24 +82,13 @@ def delete(img_name, group_id, record, inverted_index, forward_index):
 
         for key in forward_index[group_id].keys():
             file_name = os.path.basename(key)
-            if file_name.startswith(img_name):
+            if file_name.endswith(img_name):
                 del forward_index[group_id][key]
                 break
 
         return check, record, inverted_index, forward_index
     except KeyError:
         return check, record, inverted_index, forward_index
-
-
-def _remove(arr, ele):
-    old_len = len(arr)
-    for name in arr:
-        file_name = os.path.basename(name)
-        if file_name.startswith(ele):
-            arr.remove(name)
-            break
-    
-    return len(arr) < old_len
 
 
 
@@ -147,7 +147,7 @@ def inverted2forward(inverted_index):
 def findAlltag(img_name, forward_index, group_id):
     for key, value in forward_index[group_id].items():
         file_name = os.path.basename(key)
-        if file_name.startswith(img_name):
+        if file_name.endswith(img_name):
             return value
 
 
@@ -157,7 +157,7 @@ def addTag(tags, img_name, group_id, forward_index, inverted_index):
     path = None
     for key in forward_index[group_id].keys():
         file_name = os.path.basename(key)
-        if file_name.startswith(img_name):
+        if file_name.endswith(img_name):
             path = key
             for tag in tags:
                 forward_index[group_id][key].add(tag)
@@ -174,7 +174,7 @@ def delTag(tags, img_name, group_id, forward_index, inverted_index):
     path = None
     for key in forward_index[group_id].keys():
         file_name = os.path.basename(key)
-        if file_name.startswith(img_name):
+        if file_name.endswith(img_name):
             path = key
             for tag in tags:
                 forward_index[group_id][key].discard(tag)

@@ -274,7 +274,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
                 break
 
         if ats:
-            # try:
+            try:
                 target_ats_list = []
                 for i in record_dict[groupNum]:
                     if i.startswith(f"{ats}_"):
@@ -282,12 +282,12 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
                 length = len(target_ats_list)
                 idx = random.randint(0, length - 1)
                 msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(target_ats_list[idx]))))
-            # except:
-            #     length = len(record_dict[groupNum])
-            #     idx = random.randint(0, length - 1)
-            #     msg = '当前查询无结果, 为您随机发送。'
-            #     msg_segment = MessageSegment.image(file=record_dict[groupNum][idx])
-            #     msg = msg + msg_segment
+            except:
+                length = len(record_dict[groupNum])
+                idx = random.randint(0, length - 1)
+                msg = '当前查询无结果, 为您随机发送。'
+                msg_segment = MessageSegment.image(file=record_dict[groupNum][idx])
+                msg = msg + msg_segment
 
         elif search_info == '':
             if groupNum not in list(record_dict.keys()):

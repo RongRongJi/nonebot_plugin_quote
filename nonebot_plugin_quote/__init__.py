@@ -584,7 +584,9 @@ async def make_record_handle(bot: Bot, event: MessageEvent, state: T_State, Sess
 render_quote = on_regex(pattern="^{}生成$".format(re.escape(plugin_config.quote_startcmd)))
 
 @render_quote.handle()
-async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
+async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State, Session: EventSession):
+
+    group_id = Session.id2
 
     if not check_font(font_path, author_font_path, emulating_font_path):
         # 字体没配置就返回
@@ -626,12 +628,15 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
             data = await download_url(url)
 
         if data:
-            image_file = io.BytesIO(data)
-            img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
+            if plugin_config.emulating_native_qq_style:
+                img_data = await generate_emulating_native_qq_style_image(int(qqid), int(group_id), f"file:///{emulating_font_path}",  raw_message, bot)
+            else:
+                image_file = io.BytesIO(data)
+                img_data = generate_quote_image(image_file, raw_message, card, font_path, author_font_path)
             
             msg = MessageSegment.image(img_data)
             response = await bot.call_api('send_group_msg', **{
-                'group_id': int(session_id.split('_')[1]),
+                'group_id': int(group_id),
                 'message': msg
             })
     else:

@@ -24,8 +24,6 @@ async def generate_emulating_native_qq_style_image(userid: int, groupid: int, fo
         "font_path": fontpath
     }
 
-    print (data)
-
     html_content = template.render(**data)
 
     async with async_playwright() as p:

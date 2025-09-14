@@ -19,16 +19,19 @@ body {
 }
 
 .chat-wrapper {
-    padding: 20px 30px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: auto;
     display: inline-block;
 }
 
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-width: 600px;
-    min-width: 200px;
+    gap: 16px;
 }
 
 .chat-message {
@@ -40,12 +43,15 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 12px;
+    background: #e0e0e0;
 }
 
 .message-block {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    max-width: calc(100% - 52px);
 }
 
 .username-level {
@@ -58,16 +64,18 @@ body {
 .username {
     font-size: 14px;
     color: #333;
-    white-space: nowrap;   /* 禁止换行 */
-    overflow: hidden;      /* 超出部分隐藏 */
-    text-overflow: ellipsis; /* 超出部分显示省略号 */
+    font-weight: 500;
 }
 
 .level {
     font-weight: bold;
-    padding: 1px 6px;
+    padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    line-height: 1;
 }
 
 .level.member {
@@ -78,11 +86,25 @@ body {
 .level.admin {
     background-color: #CEEEEB;
     color: #82C1B0;
+    padding-right: 6px;
+}
+
+.level.admin::after {
+    content: "管理员";
+    margin-left: 2px;
+    font-size: 12px;
 }
 
 .level.owner {
     background-color: #F5DDCB;
     color: #FF9B3B;
+    padding-right: 6px;
+}
+
+.level.owner::after {
+    content: "群主";
+    margin-left: 2px;
+    font-size: 12px;
 }
 
 .message-text {
@@ -93,10 +115,11 @@ body {
     border-radius: 12px;
     min-width: fit-content; 
     width: fit-content;
-    max-width: 80%;
+    max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    line-height: 1.4;
 }
 </style>
 </head>
@@ -112,12 +135,12 @@ body {
                     {% if msg.user_type == 'member' %}
                         <span class="level member">LV{{ msg.level }}</span>
                     {% elif msg.user_type == 'admin' %}
-                        <span class="level admin">LV{{ msg.level }} 管理员</span>
+                        <span class="level admin">LV{{ msg.level }}</span>
                     {% elif msg.user_type == 'owner' %}
-                        <span class="level owner">LV{{ msg.level }} 群主</span>
+                        <span class="level owner">LV{{ msg.level }}</span>
                     {% endif %}
                 </div>
-                <div class="message-text">{{ msg.message }}</div>
+                <div class="message-text">{{ msg.message.replace('\n', '<br>') | safe }}</div>
             </div>
         </div>
         {% endfor %}

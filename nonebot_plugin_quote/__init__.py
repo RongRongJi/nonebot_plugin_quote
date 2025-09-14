@@ -94,6 +94,24 @@ try:
 except Exception as e:
     logger.error(f'错误: {e}! ')
 
+# 运行前将绝对路径修改为相对路径
+try:
+    for i in record_dict:
+        for idx, val in enumerate(record_dict[i]):
+            record_dict[i][idx] = os.path.basename(val)
+    with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
+        json.dump(record_dict, f, indent=4, ensure_ascii=False)
+
+    for i in inverted_index:
+        for j in inverted_index[i]:
+            for idx, val in enumerate(inverted_index[i][j]):
+                inverted_index[i][j][idx] = os.path.basename(val)
+    with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as f:
+        json.dump(inverted_index, f, indent=4, ensure_ascii=False)
+    logger.info('已去除语录数据库中的绝对路径内容')
+except Exception as e:
+    logger.error(f'错误: {e}! ')
+
 forward_index = inverted2forward(inverted_index)
 
 

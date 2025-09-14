@@ -286,7 +286,7 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State, Session: Ev
                 length = len(record_dict[groupNum])
                 idx = random.randint(0, length - 1)
                 msg = '当前查询无结果, 为您随机发送。'
-                msg_segment = MessageSegment.image(file=record_dict[groupNum][idx])
+                msg = MessageSegment.image(file=os.path.abspath(os.path.join(quote_path, os.path.basename(record_dict[groupNum][idx]))))
                 msg = msg + msg_segment
 
         elif search_info == '':

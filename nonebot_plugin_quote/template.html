@@ -1,70 +1,70 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Chat UI</title>
-    <style>
-        @font-face {
-            font-family: 'CustomFont';
-            src: url('{{ font_path }}') format('truetype');
-        }
+<meta charset="UTF-8">
+<title>Chat UI</title>
+<style>
+@font-face {
+    font-family: 'CustomFont';
+    src: url('{{ font_path }}') format('truetype');
+}
 
-        body {
-            font-family: 'CustomFont', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f0f0f0;
-            display: flex;
-            justify-content: center;
-        }
+body {
+    font-family: 'CustomFont', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f0f0;
+    display: flex;
+    justify-content: center;
+}
 
-        .chat-wrapper {
-            background: #f0f0f0;
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 600px;
-            width: auto;
-            display: inline-block;
-        }
+.chat-wrapper {
+    background: #f0f0f0;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 600px;
+    width: auto;
+    display: inline-block;
+}
 
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
-        .chat-message {
-            display: flex;
-            align-items: flex-start;
-        }
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+}
 
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 12px;
-            background: #e0e0e0;
-        }
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background: #e0e0e0;
+}
 
-        .message-block {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            max-width: calc(100% - 52px);
-        }
+.message-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    max-width: calc(100% - 52px);
+}
 
-        .username-level {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 4px;
-        }
+.username-level {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
 
-        .username {
-            font-size: 12px;
-            color: #444;
-            font-weight: 500;
-        }
+.username {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
 
 .level {
     font-weight: bold;
@@ -77,56 +77,42 @@
     line-height: 1;
 }
 
-        .level {
-            font-weight: bold;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: var(--level-font-size);
-            display: flex;
-            align-items: center;
-            gap:2px;
-        }
-        .level div{
-            line-height: 1;
-        }
+.level.admin {
+    background-color: #CEEEEB;
+    color: #82C1B0;
+    padding-right: 6px;
+}
 
-        .level.admin {
-            background-color: #CEEEEB;
-            color: #82C1B0;
-            padding-right: 6px;
-        }
+.level.owner {
+    background-color: #F5DDCB;
+    color: #FF9B3B;
+    padding-right: 6px;
+}
 
-        .level.owner {
-            background-color: #F5DDCB;
-            color: #FF9B3B;
-            padding-right: 6px;
-        }
+.message-text {
+    display: inline-block;
+    font-size: 16px;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 12px;
+    min-width: fit-content;
+    width: fit-content;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    line-height: 1.4;
+}
 
-        .message-text {
-            display: inline-block;
-            font-size: 13px;
-            color: #333;
-            padding: 4px 8px;
-            background: #fff;
-            border-radius: 8px;
-            min-width: fit-content;
-            width: fit-content;
-            max-width: 100%;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            line-height: 1.4;
-        }
+.message-text img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 1px;
+    margin-bottom: 4px;
+}
 
-        .message-text img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-top: 1px;
-            margin-bottom: 4px;
-        }
-
-    </style>
+</style>
 </head>
 <body>
 <div class="chat-wrapper">
@@ -139,40 +125,23 @@
                     <span class="username">{{ msg.username }}</span>
 
                     {% if msg.user_type == 'member' %}
-                    <div class="level member"
-                         style="background-color: {% if msg.title %}#e4daf3{% else %}#E2E2E2{% endif %};
+                        <span class="level member"
+                              style="background-color: {% if msg.title %}#e4daf3{% else %}#E2E2E2{% endif %};
                                      color: {% if msg.title %}#b589f6{% else %}#a2a2a2{% endif %};">
-                        <div>LV{{ msg.level }}</div>
-                        <div>{% if msg.title %} {{ msg.title }}{% endif %}</div>
-                    </div>
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% endif %}
+                        </span>
                     {% elif msg.user_type == 'admin' %}
-                    <div class="level admin">
-                        <div>LV{{ msg.level }}</div>
-                        <div>{% if msg.title %} {{ msg.title }}{% else %} 管理员{% endif %}</div>
-                    </div>
+                        <span class="level admin">
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% else %} 管理员{% endif %}
+                        </span>
                     {% elif msg.user_type == 'owner' %}
-                    <div class="level owner">
-                        <div>LV{{ msg.level }}</div>
-                        <div>{% if msg.title %} {{ msg.title }}{% else %} 群主{% endif %}</div>
-                    </div>
+                        <span class="level owner">
+                            LV{{ msg.level }}{% if msg.title %} {{ msg.title }}{% else %} 群主{% endif %}
+                        </span>
                     {% endif %}
 
                 </div>
-                <div class="message-text">
-                    {% for item in msg.message %}
-                    {% if item[0] == 'text' %}
-                    <div class="text-message">
-                        {{ item[1] }}
-                    </div>
-                    {% elif item[0] == 'image' %}
-                    <div class="image-message" style="max-width:320px">
-                        {{item[1] | safe}}
-                    </div>
-                    {% else %}
-                    <div>[未知类型: {{ item.type }}]</div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
+                <div class="message-text">{{ msg.message.replace('\n', '<br>') | safe }}</div>
             </div>
         </div>
         {% endfor %}

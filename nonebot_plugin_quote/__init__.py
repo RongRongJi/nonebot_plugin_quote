@@ -15,7 +15,10 @@ from .task import copy_images_files
 from .config import Config, check_font
 from nonebot.log import logger
 import time
-from paddleocr import PaddleOCR
+
+import pytesseract
+from PIL import Image
+
 from PIL import Image
 import io
 import httpx
@@ -177,15 +180,13 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     logger.info(f"图片已保存到 {image_path}")
     # OCR分词
     # 初始化PaddleOCR
-    ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+
     try:
         # 使用PaddleOCR进行OCR识别
-        ocr_result = ocr.ocr(image_path, cls=True)
+        img = Image.open(image_path)
+        ocr_result = pytesseract.image_to_string(img, lang='chi_sim+eng')
         # 处理OCR识别结果
-        ocr_content = ''
-        for line in ocr_result:
-            for word in line:
-                ocr_content += word[1][0] + ' '
+        ocr_content = ocr_result.replace('\n', ' ').strip()
     except Exception as e:
         ocr_content = ''
         print(f"OCR识别失败: {e}")

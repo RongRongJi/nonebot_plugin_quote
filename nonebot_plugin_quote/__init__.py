@@ -16,10 +16,8 @@ from .config import Config, check_font
 from nonebot.log import logger
 import time
 
-import pytesseract
-from PIL import Image
+from rapidocr_onnxruntime import RapidOCR
 
-from PIL import Image
 import io
 import httpx
 import hashlib
@@ -83,6 +81,28 @@ except Exception as e:
 
 forward_index = inverted2forward(inverted_index)
 
+engine = RapidOCR()
+
+def get_ocr_content(image_path):
+    try:
+        # RapidOCR 支持文件路径、bytes 或 PIL 图片
+        result, _ = engine(image_path)
+        
+        if result:
+            # result 格式：[[[坐标], 文本, 置信度], ...]
+            # 这里的 line[1] 直接就是识别出的文字
+            ocr_content = " ".join([line[1] for line in result])
+            
+            # 如果你想过滤掉顶部的黑昵称，可以加个简单的坐标过滤
+            # ocr_content = " ".join([line[1] for line in result if line[0][0][1] > 50])
+
+            logger.info(f"RapidOCR 识别结果: {ocr_content}")
+            
+            return ocr_content.strip()
+    except Exception as e:
+        logger.warning(f"RapidOCR 识别失败喵: {e}")
+    
+    return ""
 
 # 回复信息处理
 async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
@@ -181,17 +201,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     # OCR分词
     # 初始化PaddleOCR
 
-    try:
-        # 使用PaddleOCR进行OCR识别
-        img = Image.open(image_path)
-        ocr_result = pytesseract.image_to_string(img, lang='chi_sim+eng')
-        # 处理OCR识别结果
-        ocr_content = ocr_result.replace('\n', ' ').strip()
-        logger.info(f"OCR识别结果: {ocr_content}")
-    except Exception as e:
-        ocr_content = ''
-        logger.warning(f"OCR识别失败: {e}")
-
+    ocr_content = get_ocr_content(image_path)
 
     if 'group' in session_id:
         tmpList = session_id.split('_')

@@ -187,9 +187,10 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
         ocr_result = pytesseract.image_to_string(img, lang='chi_sim+eng')
         # 处理OCR识别结果
         ocr_content = ocr_result.replace('\n', ' ').strip()
+        logger.info(f"OCR识别结果: {ocr_content}")
     except Exception as e:
         ocr_content = ''
-        print(f"OCR识别失败: {e}")
+        logger.warning(f"OCR识别失败: {e}")
 
 
     if 'group' in session_id:

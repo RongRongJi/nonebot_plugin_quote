@@ -1,4 +1,4 @@
-import json
+import pathlib
 import jieba
 import os
 import random
@@ -14,7 +14,7 @@ def offer(group_id, img_file, content, inverted_index, forward_index):
     if group_id not in inverted_index:
         inverted_index[group_id] = {}
         forward_index[group_id] = {}
-        
+
     forward_index[group_id][img_file] = set(cut_words)
     # 分词是否在群的hashmap里
     for word in cut_words:
@@ -22,37 +22,37 @@ def offer(group_id, img_file, content, inverted_index, forward_index):
             inverted_index[group_id][word] = [img_file]
         else:
             inverted_index[group_id][word].append(img_file)
-    
+
     return inverted_index, forward_index
 
 
 # 倒排索引表查询图片
 def query(sentence, group_id, inverted_index):
-    if sentence.startswith('#'):
+    if sentence.startswith("#"):
         cut_words = [sentence[1:]]
     else:
         cut_words = jieba.lcut_for_search(sentence)
         cut_words = list(set(cut_words))
     if group_id not in inverted_index:
-        return {'status': -1}
+        return {"status": -1}
     hash_map = inverted_index[group_id]
     count_map = {}
     result_pool = []
     for word in cut_words:
         if word not in hash_map:
-            return {'status': 2}
+            return {"status": 2}
         for img in hash_map[word]:
             if img not in count_map:
                 count_map[img] = 1
             else:
                 count_map[img] += 1
             if count_map[img] == len(cut_words):
-                    result_pool.append(img)
-        
+                result_pool.append(img)
+
     if len(result_pool) == 0:
-        return {'status': 2}
-    idx = random.randint(0, len(result_pool)-1)
-    return {'status': 1, 'msg': result_pool[idx]}
+        return {"status": 2}
+    idx = random.randint(0, len(result_pool) - 1)
+    return {"status": 1, "msg": result_pool[idx]}
 
 
 # 删除内容
@@ -64,7 +64,7 @@ def delete(img_name, group_id, record, inverted_index, forward_index):
             check = _remove(inverted_index[group_id][key], img_name) or check
             if len(inverted_index[group_id][key]) == 0:
                 del inverted_index[group_id][key]
-        
+
         check = _remove(record[group_id], img_name) or check
         if len(record[group_id]) == 0:
             del record[group_id]
@@ -87,46 +87,34 @@ def _remove(arr, ele):
         if file_name.startswith(ele):
             arr.remove(name)
             break
-    
+
     return len(arr) < old_len
-
-
-
-def handle_ocr_text(texts):
-    _len_ = len(texts)
-    if _len_ == 0:
-        return ''
-    ret = texts[0]['text']
-    for i in range(1, _len_):
-        _last_vectors = texts[i-1]['coordinates']
-        _cur_vectors = texts[i]['coordinates']
-        _last_width = _last_vectors[1]['x'] - _last_vectors[0]['x']
-        _cur_width = _cur_vectors[1]['x'] - _cur_vectors[0]['x']
-        _last_start = _last_vectors[0]['x']
-        _cur_start = _cur_vectors[0]['x']
-
-        _last_end = _last_vectors[1]['x']
-        _cur_end = _cur_vectors[1]['x']
-        # 起始点判断 误差在15以内 
-        # 长度判断 上一句比下一句长 误差在5以内
-        if abs(_cur_start - _last_start) <= 15 and _last_width + 5 > _cur_width:
-            # 判定为长句换行了
-            ret += texts[i]['text']
-        # 终点判断 误差在15以内
-        # 长度判断 上一句比下一句短 误差在5以内
-        elif abs(_cur_end - _last_end) <= 15 and _cur_width + 5 > _last_width:
-            # 判定为长句换行了
-            ret += texts[i]['text']
-        else:
-            ret += '\n' + texts[i]['text']
-    
-    return ret
-
 
 def cut_sentence(sentence):
     cut_words = jieba.lcut_for_search(sentence)
     cut_words = list(set(cut_words))
-    remove_set = set(['.',',','!','?',':',';','。','，','！','？','：','；','%','$','\n',' ','[',']'])
+    remove_set = set(
+        [
+            ".",
+            ",",
+            "!",
+            "?",
+            ":",
+            ";",
+            "。",
+            "，",
+            "！",
+            "？",
+            "：",
+            "；",
+            "%",
+            "$",
+            "\n",
+            " ",
+            "[",
+            "]",
+        ]
+    )
     new_words = [word for word in cut_words if word not in remove_set]
 
     return new_words
@@ -190,26 +178,29 @@ def delTag(tags, img_name, group_id, forward_index, inverted_index):
     return path, forward_index, inverted_index
 
 
-IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif']
+IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"]
+
+
 def copy_images_files(source, destinate):
     image_files = []
-    for root,_,files in os.walk(source):
-        for filename in files:
-            extension = os.path.splitext(filename)[1].lower()
-            if extension in IMAGE_EXTENSIONS:
-                image_path = os.path.join(root, filename)
-                # 获得md5
-                md5 = get_img_md5(image_path) + '.image'
-                tname = md5 + extension
-                # 复制到目录
-                destination_path = os.path.join(destinate, tname)
-                shutil.copy(image_path, destination_path)
-                image_files.append((md5, tname))
+    destination_path = pathlib.Path(destinate)
+    if not destination_path.exists():
+        destination_path.mkdir(parents=True, exist_ok=True)
+    for extension in IMAGE_EXTENSIONS:
+        for file in pathlib.Path(source).rglob(f"*{extension}"):
+            # 获得md5
+            md5 = get_img_md5(str(file))
+            tname = md5 + extension
+            # 复制到目录
+            file.copy_into(destination_path / tname)
+            image_files.append((md5, tname))
     return image_files
 
 
 def get_img_md5(img_path):
-    with open(img_path, 'rb') as f:
-        img_data = f.read()
-    md5 = hashlib.md5(img_data).hexdigest()
-    return md5
+    """
+    return: 图片的 md5 值
+    
+    :param img_path: 图片路径
+    """
+    return hashlib.md5(pathlib.Path(img_path).read_bytes()).hexdigest()

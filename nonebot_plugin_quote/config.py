@@ -11,8 +11,10 @@ class Config(BaseModel, extra=Extra.ignore):
     quote_needat: bool = True
     quote_startcmd: str = ''
     quote_path: str = 'quote'
+    quote_needprefix: bool = True
     font_path: str = 'font1'
     author_font_path: str = 'font2'
+    quote_enable_ocr : bool = True
 
 def check_font(font_path, author_font_path):
     # 判断字体是否配置

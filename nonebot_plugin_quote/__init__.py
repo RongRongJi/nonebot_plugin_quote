@@ -1,8 +1,8 @@
-from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
+from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex, on_message
 from nonebot.rule import to_me
 from nonebot.adapters import Message
 from nonebot.params import Arg, ArgPlainText, CommandArg
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception, GroupMessageEvent
 from nonebot.typing import T_State  
 from nonebot.plugin import PluginMetadata
 import re
@@ -23,7 +23,7 @@ import hashlib
 import uuid
 from .make_image import generate_quote_image
 
-# v0.4.3
+# v0.5.0
 
 __plugin_meta__ = PluginMetadata(
     name='群聊语录库',
@@ -175,21 +175,23 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     
     image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
     logger.info(f"图片已保存到 {image_path}")
-    # OCR分词
-    # 初始化PaddleOCR
-    ocr = PaddleOCR(use_angle_cls=True, lang='ch')
-    try:
-        # 使用PaddleOCR进行OCR识别
-        ocr_result = ocr.ocr(image_path, cls=True)
-        # 处理OCR识别结果
+    if plugin_config.quote_enable_ocr:
+        # OCR分词
+        # 初始化PaddleOCR
+        ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+        try:
+            # 使用PaddleOCR进行OCR识别
+            ocr_result = ocr.ocr(image_path, cls=True)
+            # 处理OCR识别结果
+            ocr_content = ''
+            for line in ocr_result:
+                for word in line:
+                    ocr_content += word[1][0] + ' '
+        except Exception as e:
+            ocr_content = ''
+            print(f"OCR识别失败: {e}")
+    else:
         ocr_content = ''
-        for line in ocr_result:
-            for word in line:
-                ocr_content += word[1][0] + ' '
-    except Exception as e:
-        ocr_content = ''
-        print(f"OCR识别失败: {e}")
-
 
     if 'group' in session_id:
         tmpList = session_id.split('_')
@@ -219,7 +221,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
 record_pool = on_startswith('{}语录'.format(plugin_config.quote_startcmd), priority=2, block=True, **need_at)
 
 @record_pool.handle()
-async def record_pool_handle(bot: Bot, event: Event, state: T_State):
+async def record_pool_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
@@ -261,12 +263,8 @@ async def record_pool_handle(bot: Bot, event: Event, state: T_State):
             else:
                 msg = ret.text
 
-        response = await bot.call_api('send_group_msg', **{
-            'group_id': int(groupNum),
-            'message': msg
-        })
-    await record_pool.finish()
-
+        await record_pool.finish(Message(msg))
+    
 
 record_help = on_keyword({"语录"}, priority=10, rule=to_me())
 
@@ -366,7 +364,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
 
     await alltag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
-addtag = on_regex(pattern="^{}addtag\ ".format(plugin_config.quote_startcmd), **need_at)
+addtag = on_regex(pattern="^{}addtag ".format(plugin_config.quote_startcmd), **need_at)
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -400,7 +398,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     await addtag.finish(group_id=int(groupNum), message=MessageSegment.at(user_id) + msg)
 
 
-deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
+deltag = on_regex(pattern="^{}deltag ".format(plugin_config.quote_startcmd), **need_at)
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):
@@ -724,3 +722,19 @@ gocq_path=/home/xxx/gocq/data/cache'''
     except FileNotFoundError:
         await copy_batch.finish("路径不正确")
     await copy_batch.finish("备份完成")
+
+if plugin_config.quote_needprefix:
+    message_handler = on_message(block=False)
+    
+    @message_handler.handle()
+    async def handle_all_messages(event: GroupMessageEvent):
+        message_text = event.get_plaintext().strip()
+        groupNum = str(event.group_id)
+
+        ret = query(message_text, groupNum, inverted_index)
+
+        if ret['status'] == 1:
+            msg = MessageSegment.image(file=ret['msg'])
+
+            await message_handler.finish(Message(msg))
+        await message_handler.finish()

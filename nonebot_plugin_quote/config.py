@@ -13,6 +13,9 @@ class Config(BaseModel, extra=Extra.ignore):
     quote_path: str = 'quote'
     font_path: str = 'font1'
     author_font_path: str = 'font2'
+    quote_upload: bool = False
+    quote_delete: bool = False
+    quote_modify_tags: bool = False
 
 def check_font(font_path, author_font_path):
     # 判断字体是否配置

@@ -69,14 +69,14 @@ try:
 
     with open(plugin_config.inverted_index_path, 'r', encoding='UTF-8') as fi:
         inverted_index = json.load(fi)
-    logger.info('nonebot_plugin_quote路径配置成功')
+    logger.info('nonebot_plugin_quote 路径配置成功')
 except Exception as e:
     with open(plugin_config.record_path, 'w', encoding='UTF-8') as f:
         json.dump(record_dict, f, indent=2, separators=(',', ': '), ensure_ascii=False)
 
     with open(plugin_config.inverted_index_path, 'w', encoding='UTF-8') as fc:
         json.dump(inverted_index, fc, indent=2, separators=(',', ': '), ensure_ascii=False)
-    logger.warning('已创建json文件')
+    logger.warning('已创建 json 文件')
 
 
 forward_index = inverted2forward(inverted_index)
@@ -156,6 +156,8 @@ save_img = on_regex(pattern="^{}上传$".format(re.escape(plugin_config.quote_st
 
 @save_img.handle()
 async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
+    if not plugin_config.quote_upload:
+        await make_record.finish("管理员已关闭上传功能TUT")
 
     session_id = event.get_session_id()
     message_id = event.message_id
@@ -308,6 +310,8 @@ delete_record = on_regex(pattern=r'^{}删除$'.format(re.escape(plugin_config.qu
 
 @delete_record.handle()
 async def delete_record_handle(bot: Bot, event: Event, state: T_State):
+    if not plugin_config.quote_delete:
+        await delete_record.finish("管理员已关闭删除功能TUT")
 
     global inverted_index
     global record_dict
@@ -352,6 +356,8 @@ alltag = on_command('{}alltag'.format(plugin_config.quote_startcmd), aliases={'{
 
 @alltag.handle()
 async def alltag_handle(bot: Bot, event: Event, state: T_State):
+    if not plugin_config.quote_modify_tags:
+        await alltag.finish("管理员已关闭修改标签功能TUT")
 
     global inverted_index
     global record_dict

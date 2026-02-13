@@ -23,7 +23,6 @@ from .task import (
     offer,
     query,
     delete,
-    handle_ocr_text,
     inverted2forward,
     findAlltag,
     addTag,
@@ -740,7 +739,7 @@ async def render_quote_handle(bot: Bot, event: MessageEvent, state: T_State):
 
 
 script_batch = on_regex(
-    pattern="^{}batch_upload".format(plugin_config.quote_startcmd), **need_at
+    pattern=f"^{plugin_config.quote_startcmd}batch_upload", **need_at
 )
 
 
@@ -795,7 +794,6 @@ tags=aaa bbb ccc"""
         if group_id[0] in forward_index and save_file in forward_index[group_id[0]]:
             await bot.send_msg(group_id=int(groupNum), message="上述图片已存在")
             continue
-
 
         ocr_content = get_ocr_content(save_file)
 

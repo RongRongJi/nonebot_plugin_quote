@@ -190,7 +190,7 @@ def copy_images_files(source, destinate):
             md5 = get_img_md5(str(file))
             tname = md5 + extension
             # 复制到目录
-            file.copy_into(destination_path / tname)
+            file.copy(destination_path / tname)
             image_files.append((md5, tname))
     return image_files
 

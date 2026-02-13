@@ -776,7 +776,7 @@ batch_upload
 qqgroup=123456
 your_path=/home/xxx/images
 tags=aaa bbb ccc"""
-    if len(group_id) == 0 or len(your_path) == 0 or len(gocq_path) == 0:
+    if len(group_id) == 0 or len(your_path) == 0:
         await script_batch.finish(instruction)
     # 获取图片
     image_files = copy_images_files(your_path[0], quote_path)

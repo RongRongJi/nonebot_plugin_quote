@@ -3,8 +3,6 @@ import jieba
 import os
 import random
 import hashlib
-import shutil
-
 
 # 向语录库添加新的图片
 def offer(group_id, img_file, content, inverted_index, forward_index):

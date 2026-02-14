@@ -84,7 +84,7 @@ font_path = plugin_config.font_path
 author_font_path = plugin_config.author_font_path
 
 # 判断参数配置情况
-os.makedirs(QUOTE_PATH, exist_ok=True)
+(QUOTE_PATH.mkdir(exist_ok=True))
 
 if not check_font(font_path, author_font_path):
     logger.warning("未配置字体路径，部分功能无法使用")
@@ -493,17 +493,16 @@ async def make_record_handle(event: MessageEvent):
 
     image_name = hashlib.md5(img_data).hexdigest() + ".png"
 
-    image_path = os.path.abspath(os.path.join(QUOTE_PATH, os.path.basename(image_name)))
+    image_path = pathlib.Path(QUOTE_PATH).joinpath(image_name)
 
-    with open(image_path, "wb") as file:
-        file.write(img_data)
+    image_path.write_bytes(img_data)
 
     if "group" in session_id:
         group_id = session_id.split("_")[1]
 
         offer(
             group_id,
-            pathlib.Path(image_path),
+            image_path,
             card + " " + raw_message,
         )
 

@@ -16,6 +16,7 @@ from nonebot import (
     get_driver,
     on_regex,
     on_message,
+    require,
 )
 from nonebot.rule import to_me
 from nonebot.adapters.onebot.v11 import (
@@ -48,7 +49,7 @@ from .task import (
 from .config import Config, check_font
 from .make_image import generate_quote_image
 
-# v0.5.0
+require("nonebot_plugin_apscheduler")
 
 __plugin_meta__ = PluginMetadata(
     name="群聊语录库",
@@ -706,6 +707,7 @@ async def dump_quote_data():
     logger.info("正在持久化语录数据...")
     dump_data()
     logger.info("语录数据持久化完成")
+
 
 @driver.on_shutdown
 async def shutdown_event():

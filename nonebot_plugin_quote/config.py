@@ -14,9 +14,9 @@ class Config(BaseModel, extra=Extra.ignore):
     quote_needprefix: bool = True
     font_path: str = 'font1'
     author_font_path: str = 'font2'
-    quote_upload: bool = False
-    quote_delete: bool = False
-    quote_modify_tags: bool = False
+    quote_upload: bool = True
+    quote_delete: bool = True
+    quote_modify_tags: bool = True
     quote_enable_ocr : bool = True
 
 def check_font(font_path, author_font_path):

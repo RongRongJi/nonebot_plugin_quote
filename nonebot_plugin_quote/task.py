@@ -1,15 +1,80 @@
+import asyncio
 import pathlib
-import jieba
 import os
 import random
 import hashlib
+import json
+
+import jieba
+import httpx
 
 from rapidocr_onnxruntime import RapidOCR
 
+from nonebot import get_driver
 from nonebot.log import logger
 
-# 向语录库添加新的图片
-def offer(group_id, img_file: pathlib.Path, content, inverted_index, forward_index):
+from .config import Config
+
+inverted_index_path = pathlib.Path(
+    Config.model_validate(get_driver().config.model_dump()).inverted_index_path
+)
+record_path = pathlib.Path(
+    Config.model_validate(get_driver().config.model_dump()).record_path
+)
+inverted_index = {}
+record_dict = {}
+
+if record_path.exists():
+    record_dict = json.load(record_path.open(encoding="UTF-8", mode="r"))
+    logger.info("nonebot_plugin_quote 路径配置成功")
+else:
+    json.dump(
+        record_dict,
+        record_path.open(encoding="UTF-8", mode="w"),
+        indent=2,
+        separators=(",", ": "),
+        ensure_ascii=False,
+    )
+    logger.warning("已创建 json 文件")
+
+if inverted_index_path.exists():
+    inverted_index = json.load(inverted_index_path.open(encoding="UTF-8", mode="r"))
+    logger.info("nonebot_plugin_quote 路径配置成功")
+else:
+    json.dump(
+        inverted_index,
+        inverted_index_path.open(encoding="UTF-8", mode="w"),
+        indent=2,
+        separators=(",", ": "),
+        ensure_ascii=False,
+    )
+    logger.warning("已创建 json 文件")
+
+
+# 倒排索引 转 正向索引
+def inverted2forward(index):
+    result = {}
+    for qq_group in index.keys():
+        result[qq_group] = {}
+        for word, imgs in index[qq_group].items():
+            for img in imgs:
+                result[qq_group].setdefault(img, set()).add(word)
+    return result
+
+
+forward_index = inverted2forward(inverted_index)
+
+
+def offer(group_id, img_file: pathlib.Path, content):
+    """
+    向语录库添加新的图片
+
+    :param group_id: 群号
+    :param img_file: 图片文件路径
+    :type img_file: pathlib.Path
+    :param content: 图片内容（用于分词）
+    """
+
     # 分词
     cut_words = cut_sentence(content)
     # 群号是否在表中
@@ -25,24 +90,52 @@ def offer(group_id, img_file: pathlib.Path, content, inverted_index, forward_ind
         else:
             inverted_index[group_id][word].append(str(img_file))
 
+    if group_id not in record_dict:
+        record_dict[group_id] = [str(img_file.absolute())]
+    else:
+        if str(img_file.absolute()) not in record_dict[group_id]:
+            record_dict[group_id].append(str(img_file.absolute()))
     return inverted_index, forward_index
 
 
+def quote_exists(group_id):
+    """
+    判断一个群是否有语录
+
+    :param group_id: 群号
+    """
+    return group_id in record_dict and len(record_dict[group_id]) > 0
+
+def image_exists(group_id, img_path):
+    """
+    判断一个图片是否在语录库中
+
+    :param group_id: 群号
+    :param img_path: 图片路径
+    """
+    return quote_exists(group_id) and img_path in record_dict[group_id]
+
 # 倒排索引表查询图片
-def query(sentence, group_id, inverted_index):
+def random_quote(sentence, group_id) -> str:
+    """
+    随机选取一张图片返回
+
+    :param sentence: 关键词。空串表示随机返回一个图片。
+    :param group_id: 群号
+    """
+    if sentence == "":
+        return random.choice(record_dict[group_id])
     if sentence.startswith("#"):
         cut_words = [sentence[1:]]
     else:
         cut_words = jieba.lcut_for_search(sentence)
         cut_words = list(set(cut_words))
-    if group_id not in inverted_index:
-        return {"status": -1}
     hash_map = inverted_index[group_id]
     count_map = {}
     result_pool = []
     for word in cut_words:
         if word not in hash_map:
-            return {"status": 2}
+            continue
         for img in hash_map[word]:
             if img not in count_map:
                 count_map[img] = 1
@@ -52,13 +145,13 @@ def query(sentence, group_id, inverted_index):
                 result_pool.append(img)
 
     if len(result_pool) == 0:
-        return {"status": 2}
-    idx = random.randint(0, len(result_pool) - 1)
-    return {"status": 1, "msg": result_pool[idx]}
+        return ""
+    else:
+        return random.choice(result_pool)
 
 
 # 删除内容
-def delete(img_name, group_id, record, inverted_index, forward_index):
+def delete(img_name, group_id):
     check = False
     try:
         keys = list(inverted_index[group_id].keys())
@@ -67,9 +160,9 @@ def delete(img_name, group_id, record, inverted_index, forward_index):
             if len(inverted_index[group_id][key]) == 0:
                 del inverted_index[group_id][key]
 
-        check = _remove(record[group_id], img_name) or check
-        if len(record[group_id]) == 0:
-            del record[group_id]
+        check = _remove(record_dict[group_id], img_name) or check
+        if len(record_dict[group_id]) == 0:
+            del record_dict[group_id]
 
         for key in forward_index[group_id].keys():
             file_name = os.path.basename(key)
@@ -77,9 +170,9 @@ def delete(img_name, group_id, record, inverted_index, forward_index):
                 del forward_index[group_id][key]
                 break
 
-        return check, record, inverted_index, forward_index
+        return check, record_dict, inverted_index, forward_index
     except KeyError:
-        return check, record, inverted_index, forward_index
+        return check, record_dict, inverted_index, forward_index
 
 
 def _remove(arr, ele):
@@ -123,19 +216,8 @@ def cut_sentence(sentence):
     return new_words
 
 
-# 倒排索引 转 正向索引
-def inverted2forward(inverted_index):
-    forward_index = {}
-    for qq_group in inverted_index.keys():
-        forward_index[qq_group] = {}
-        for word, imgs in inverted_index[qq_group].items():
-            for img in imgs:
-                forward_index[qq_group].setdefault(img, set()).add(word)
-    return forward_index
-
-
 # 输出所有tag
-def findAlltag(img_name, forward_index, group_id):
+def findAlltag(img_name, group_id):
     for key, value in forward_index[group_id].items():
         file_name = os.path.basename(key)
         if file_name.startswith(img_name):
@@ -143,7 +225,7 @@ def findAlltag(img_name, forward_index, group_id):
 
 
 # 添加tag
-def addTag(tags, img_name, group_id, forward_index, inverted_index):
+def addTag(tags, img_name, group_id):
     # 是否存在
     path = None
     for key in forward_index[group_id].keys():
@@ -161,7 +243,7 @@ def addTag(tags, img_name, group_id, forward_index, inverted_index):
 
 
 # 删除tag
-def delTag(tags, img_name, group_id, forward_index, inverted_index):
+def delTag(tags, img_name, group_id):
     path = None
     for key in forward_index[group_id].keys():
         file_name = os.path.basename(key)
@@ -208,7 +290,9 @@ def get_img_md5(img_path):
     """
     return hashlib.md5(pathlib.Path(img_path).read_bytes()).hexdigest()
 
+
 engine = RapidOCR()
+
 
 def get_ocr_content(image_path):
     try:
@@ -224,3 +308,44 @@ def get_ocr_content(image_path):
         logger.warning(f"RapidOCR 识别失败喵: {e}")
 
     return ""
+
+
+def dump_data():
+    """
+    dump data to json file
+    """
+    json.dump(
+        record_dict,
+        record_path.open(encoding="UTF-8", mode="w"),
+        indent=2,
+        separators=(",", ": "),
+        ensure_ascii=False,
+    )
+    json.dump(
+        inverted_index,
+        inverted_index_path.open(encoding="UTF-8", mode="w"),
+        indent=2,
+        separators=(",", ": "),
+        ensure_ascii=False,
+    )
+
+
+async def download_url(url: str) -> bytes:
+    """
+    从 url 下载图片，返回图片的二进制内容
+    
+    :param url: 说明
+    :type url: str
+    :return: 说明
+    :rtype: bytes
+    """
+    async with httpx.AsyncClient() as client:
+        for i in range(3):
+            try:
+                response = await client.get(url, timeout=10)
+                response.raise_for_status()
+                return response.content
+            except httpx.HTTPError as e:
+                logger.warning(f"Error downloading {url}, retry {i}/3: {e}")
+                await asyncio.sleep(3)
+    raise httpx.NetworkError(f"{url} 下载失败！")

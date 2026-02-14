@@ -10,7 +10,7 @@ class Config(BaseModel, extra=Extra.ignore):
     superusers: set[str]
     quote_needat: bool = True
     quote_startcmd: str = ''
-    quote_path: str = 'quote'
+    quote_path: str = './data'
     quote_needprefix: bool = True
     font_path: str = 'font1'
     author_font_path: str = 'font2'

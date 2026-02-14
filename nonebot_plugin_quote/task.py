@@ -6,6 +6,8 @@ import hashlib
 
 from rapidocr_onnxruntime import RapidOCR
 
+from nonebot.log import logger
+
 # 向语录库添加新的图片
 def offer(group_id, img_file: pathlib.Path, content, inverted_index, forward_index):
     # 分词

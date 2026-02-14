@@ -296,8 +296,10 @@ engine = RapidOCR()
 
 def get_ocr_content(image_path):
     try:
-        result, _ = engine(image_path)
-
+        r = engine(image_path)
+        if getattr(r, "txts", None) is None:
+            return ""
+        result = getattr(r, "txts")
         if result:
             ocr_content = " ".join([line[1] for line in result])
 

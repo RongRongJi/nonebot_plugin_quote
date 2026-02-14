@@ -2,15 +2,7 @@ import pathlib
 from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    Event,
-    Message,
-    MessageEvent,
-    PrivateMessageEvent,
-    MessageSegment,
-    exception,
-)
+from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, MessageSegment, GroupMessageEvent
 from nonebot.typing import T_State
 from nonebot.plugin import PluginMetadata
 import re

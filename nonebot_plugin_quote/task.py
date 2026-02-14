@@ -4,8 +4,9 @@ import os
 import random
 import hashlib
 
+
 # 向语录库添加新的图片
-def offer(group_id, img_file, content, inverted_index, forward_index):
+def offer(group_id, img_file: pathlib.Path, content, inverted_index, forward_index):
     # 分词
     cut_words = cut_sentence(content)
     # 群号是否在表中
@@ -13,13 +14,13 @@ def offer(group_id, img_file, content, inverted_index, forward_index):
         inverted_index[group_id] = {}
         forward_index[group_id] = {}
 
-    forward_index[group_id][img_file] = set(cut_words)
+    forward_index[group_id][str(img_file)] = set(cut_words)
     # 分词是否在群的hashmap里
     for word in cut_words:
         if word not in inverted_index[group_id]:
-            inverted_index[group_id][word] = [img_file]
+            inverted_index[group_id][word] = [str(img_file)]
         else:
-            inverted_index[group_id][word].append(img_file)
+            inverted_index[group_id][word].append(str(img_file))
 
     return inverted_index, forward_index
 
@@ -87,6 +88,7 @@ def _remove(arr, ele):
             break
 
     return len(arr) < old_len
+
 
 def cut_sentence(sentence):
     cut_words = jieba.lcut_for_search(sentence)
@@ -198,7 +200,7 @@ def copy_images_files(source, destinate):
 def get_img_md5(img_path):
     """
     return: 图片的 md5 值
-    
+
     :param img_path: 图片路径
     """
     return hashlib.md5(pathlib.Path(img_path).read_bytes()).hexdigest()

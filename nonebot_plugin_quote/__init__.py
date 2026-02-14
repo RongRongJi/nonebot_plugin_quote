@@ -463,7 +463,7 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
     )
 
 
-addtag = on_regex(pattern="^{}addtag\ ".format(plugin_config.quote_startcmd), **need_at)
+addtag = on_regex(pattern=f"^{plugin_config.quote_startcmd}addtag\\ ", **need_at)
 
 
 @addtag.handle()
@@ -509,7 +509,7 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     )
 
 
-deltag = on_regex(pattern="^{}deltag\ ".format(plugin_config.quote_startcmd), **need_at)
+deltag = on_regex(pattern=f"^{plugin_config.quote_startcmd}deltag\\ ", **need_at)
 
 
 @deltag.handle()
@@ -785,11 +785,10 @@ tags=aaa bbb ccc"""
     idx = 0
 
     for imgid, img in image_files:
-        save_file = pathlib.Path(quote_path) / img
+        save_file = pathlib.Path(quote_path).joinpath(img).absolute()
         idx += 1
-        await bot.send_msg(
-            group_id=int(groupNum), message=f"[CQ:image,file={save_file}]"
-        )
+        msg = MessageSegment.image(f"{save_file.as_uri()}")
+        await bot.send_msg(group_id=int(groupNum), message=msg)
         time.sleep(2)
         if group_id[0] in forward_index and save_file in forward_index[group_id[0]]:
             await bot.send_msg(group_id=int(groupNum), message="上述图片已存在")
@@ -802,14 +801,14 @@ tags=aaa bbb ccc"""
             group_id[0], save_file, ocr_content, inverted_index, forward_index
         )
         if group_id[0] not in record_dict:
-            record_dict[group_id[0]] = [save_file]
+            record_dict[group_id[0]] = [str(save_file)]
         else:
             if save_file not in record_dict[group_id[0]]:
-                record_dict[group_id[0]].append(save_file)
+                record_dict[group_id[0]].append(str(save_file))
 
         if len(tags) != 0:
             tags = tags[0].strip().split(" ")
-            flag, forward_index, inverted_index = addTag(
+            _, forward_index, inverted_index = addTag(
                 tags, imgid, group_id[0], forward_index, inverted_index
             )
 
@@ -845,9 +844,7 @@ tags=aaa bbb ccc"""
     await script_batch.finish()
 
 
-copy_batch = on_regex(
-    pattern="^{}batch_copy".format(plugin_config.quote_startcmd), **need_at
-)
+copy_batch = on_regex(pattern=f"^{plugin_config.quote_startcmd}batch_copy", **need_at)
 
 
 @copy_batch.handle()

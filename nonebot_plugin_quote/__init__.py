@@ -31,6 +31,8 @@ from nonebot.plugin import PluginMetadata
 from nonebot.log import logger
 
 require("nonebot_plugin_apscheduler")
+
+# pylint: disable=wrong-import-position
 from nonebot_plugin_apscheduler import scheduler
 
 from .task import (

@@ -4,6 +4,7 @@ import os
 import random
 import hashlib
 
+from rapidocr_onnxruntime import RapidOCR
 
 # 向语录库添加新的图片
 def offer(group_id, img_file: pathlib.Path, content, inverted_index, forward_index):
@@ -204,3 +205,20 @@ def get_img_md5(img_path):
     :param img_path: 图片路径
     """
     return hashlib.md5(pathlib.Path(img_path).read_bytes()).hexdigest()
+
+engine = RapidOCR()
+
+def get_ocr_content(image_path):
+    try:
+        result, _ = engine(image_path)
+
+        if result:
+            ocr_content = " ".join([line[1] for line in result])
+
+            logger.info(f"RapidOCR 识别结果: {ocr_content}")
+
+            return ocr_content.strip()
+    except Exception as e:
+        logger.warning(f"RapidOCR 识别失败喵: {e}")
+
+    return ""

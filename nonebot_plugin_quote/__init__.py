@@ -2,7 +2,6 @@ import pathlib
 from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
 from nonebot.adapters import Message
-from nonebot.params import Arg, ArgPlainText, CommandArg
 from nonebot.adapters.onebot.v11 import (
     Bot,
     Event,
@@ -27,13 +26,12 @@ from .task import (
     findAlltag,
     addTag,
     delTag,
+    get_ocr_content
 )
 from .task import copy_images_files
 from .config import Config, check_font
 from nonebot.log import logger
 import time
-
-from rapidocr_onnxruntime import RapidOCR
 
 import io
 import httpx
@@ -101,31 +99,6 @@ except Exception as e:
 
 
 forward_index = inverted2forward(inverted_index)
-
-engine = RapidOCR()
-
-
-def get_ocr_content(image_path):
-    try:
-        # RapidOCR 支持文件路径、bytes 或 PIL 图片
-        result, _ = engine(image_path)
-
-        if result:
-            # result 格式：[[[坐标], 文本, 置信度], ...]
-            # 这里的 line[1] 直接就是识别出的文字
-            ocr_content = " ".join([line[1] for line in result])
-
-            # 如果你想过滤掉顶部的黑昵称，可以加个简单的坐标过滤
-            # ocr_content = " ".join([line[1] for line in result if line[0][0][1] > 50])
-
-            logger.info(f"RapidOCR 识别结果: {ocr_content}")
-
-            return ocr_content.strip()
-    except Exception as e:
-        logger.warning(f"RapidOCR 识别失败喵: {e}")
-
-    return ""
-
 
 # 回复信息处理
 async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):

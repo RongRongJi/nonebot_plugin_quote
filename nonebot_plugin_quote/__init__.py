@@ -684,7 +684,7 @@ gocq_path=/home/xxx/gocq/data/cache"""
 
 
 if not plugin_config.quote_needprefix:
-    message_handler = on_message(block=False)
+    message_handler = on_message(block=False, **need_at)
 
     @message_handler.handle()
     async def handle_all_messages(event: GroupMessageEvent):

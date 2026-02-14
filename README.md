@@ -145,6 +145,8 @@ nb plugin install nonebot-plugin-quote
 | GLOBAL_SUPERUSER | 否 | 空数组 | 全局管理员(可以删除每个群的语录，SUPERUSERS内用户无需重复填写) |
 | QUOTE_NEEDAT | 否 | True | 是否需要at机器人(开启上传通道必须at) |
 | QUOTE_STARTCMD | 否 | '' | 增加指令前缀 |
+| QUOTE_NEEDPREFIX | 否 | True | 是否需要'语录'指令前缀，不使用有较高误触风险 |
+| QUOTE_ENABLE_OCR | 否 | True | 是否开启OCR识别，开启后上传语录时会自动识别文字，可以通过文字进行检索 |
 
 `RECORD_PATH`和`INVERTED_INDEX_PATH`只需要配置，无需创建文件；若不配置`RECORD_PATH`和`INVERTED_INDEX_PATH`，将会自动在项目根目录下创建两个json文件。
 
@@ -289,6 +291,12 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 ### v0.4.3 (2025/8/13)
 
 - 兼容nonebot的 `SUPERUSERS`（可以少写一个配置项了）
+
+### v0.5.0 (2026/2/13)
+
+- 升级了PaddleOCR版本，修复ocr识别问题
+- 增加了是否需要指令前缀的配置
+- 增加了是否需要OCR识别的配置
 
 </details>
 

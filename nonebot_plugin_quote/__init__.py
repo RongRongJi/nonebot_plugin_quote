@@ -1,9 +1,11 @@
+"""
+nonebot_plugin_quote QQ群聊语录库插件
+"""
+
 import time
 import io
 import hashlib
 import re
-import json
-import asyncio
 import os
 import shutil
 import pathlib
@@ -18,6 +20,7 @@ from nonebot import (
     on_message,
     require,
 )
+from nonebot.exception import ApiNotAvailable
 from nonebot.rule import to_me
 from nonebot.adapters.onebot.v11 import (
     Bot,
@@ -199,7 +202,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent):
         source_path = pathlib.Path(response["file"])
         source_path.copy_into(QUOTE_PATH)
         image_path = QUOTE_PATH / source_path.name
-    except Exception as e:
+    except ApiNotAvailable  as e:
         logger.warning(
             f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}"
         )
@@ -261,7 +264,9 @@ record_help = on_keyword({"语录"}, priority=10, rule=to_me())
 
 @record_help.handle()
 async def record_help_handle(bot: Bot, event: Event):
-
+    """
+    处理“语录”指令的帮助信息。
+    """
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
     raw_msg = str(event.get_message())
@@ -271,8 +276,7 @@ async def record_help_handle(bot: Bot, event: Event):
     msg = """您可以通过回复指定图片, 发送【上传】指令上传语录。您也可以直接发送【语录】指令, 我将随机返回一条语录。"""
 
     if "group" in session_id:
-        tmpList = session_id.split("_")
-        group_id = tmpList[1]
+        group_id = session_id.split("_")[1]
 
         await bot.call_api(
             "send_group_msg",
@@ -283,12 +287,15 @@ async def record_help_handle(bot: Bot, event: Event):
 
 
 delete_record = on_regex(
-    pattern=r"^{}删除$".format(re.escape(plugin_config.quote_startcmd)), **need_at
+    pattern=rf"^{re.escape(plugin_config.quote_startcmd)}删除$", **need_at
 )
 
 
 @delete_record.handle()
 async def delete_record_handle(bot: Bot, event: Event):
+    """
+    处理“删除”指令。
+    """
     if not plugin_config.quote_delete:
         await delete_record.finish("管理员已关闭删除功能TUT")
 
@@ -316,9 +323,9 @@ async def delete_record_handle(bot: Bot, event: Event):
 
     raw_message = str(event)
 
-    errMsg = "请回复需要删除的语录, 并输入删除指令"
+    error_message = "请回复需要删除的语录, 并输入删除指令"
     imgs = await reply_handle(
-        bot, errMsg, raw_message, group_id, user_id, delete_record
+        bot, error_message, raw_message, group_id, user_id, delete_record
     )
 
     # 搜索
@@ -343,10 +350,9 @@ alltag = on_command(
     **need_at,
 )
 
-
 @alltag.handle()
 async def alltag_handle(bot: Bot, event: Event):
-
+    """处理“标签”指令。"""
     session_id = event.get_session_id()
     user_id = str(event.get_user_id())
 
@@ -356,8 +362,8 @@ async def alltag_handle(bot: Bot, event: Event):
     group_id = session_id.split("_")[1]
     raw_message = str(event)
 
-    errMsg = "请回复需要指定语录"
-    imgs = await reply_handle(bot, errMsg, raw_message, group_id, user_id, alltag)
+    error_message = "请回复需要指定语录"
+    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, alltag)
     tags = findAlltag(imgs, group_id)
     if tags is None:
         msg = "该语录不存在"
@@ -376,6 +382,7 @@ addtag = on_regex(pattern=f"^{plugin_config.quote_startcmd}addtag\\ ", **need_at
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event):
+    """处理“addtag”指令。"""
     if not plugin_config.quote_modify_tags:
         await alltag.finish("管理员已关闭修改标签功能TUT")
 
@@ -383,7 +390,7 @@ async def addtag_handle(bot: Bot, event: Event):
     user_id = str(event.get_user_id())
     tags = (
         str(event.get_message())
-        .replace("{}addtag".format(plugin_config.quote_startcmd), "")
+        .replace(f"{plugin_config.quote_startcmd}addtag", "")
         .strip()
         .split(" ")
     )
@@ -394,15 +401,15 @@ async def addtag_handle(bot: Bot, event: Event):
     group_id = session_id.split("_")[1]
     raw_message = str(event)
 
-    errMsg = "请回复需要指定语录"
-    imgs = await reply_handle(bot, errMsg, raw_message, group_id, user_id, addtag)
+    error_message = "请回复需要指定语录"
+    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, addtag)
 
     flag, _, _ = addTag(tags, imgs, group_id)
 
     if flag is None:
         msg = "该语录不存在"
     else:
-        msg = "已为该语录添加上{}标签".format(tags)
+        msg = f"已为该语录添加上{tags}标签"
 
     await addtag.finish(
         group_id=int(group_id), message=MessageSegment.at(user_id) + msg
@@ -414,6 +421,7 @@ deltag = on_regex(pattern=f"^{plugin_config.quote_startcmd}deltag\\ ", **need_at
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event):
+    """处理“deltag”指令。"""
     if not plugin_config.quote_modify_tags:
         await alltag.finish("管理员已关闭修改标签功能TUT")
     session_id = event.get_session_id()
@@ -431,8 +439,8 @@ async def deltag_handle(bot: Bot, event: Event):
     group_id = session_id.split("_")[1]
     raw_message = str(event)
 
-    errMsg = "请回复需要指定语录"
-    imgs = await reply_handle(bot, errMsg, raw_message, group_id, user_id, deltag)
+    error_message = "请回复需要指定语录"
+    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, deltag)
 
     flag, _, _ = delTag(tags, imgs, group_id)
 
@@ -533,7 +541,6 @@ async def render_quote_handle(event: MessageEvent):
         if event.reply.sender.card not in (None, "")
         else event.reply.sender.nickname
     )
-    session_id = event.get_session_id()
 
     if not raw_message:
         await render_quote.finish("空内容")
@@ -647,6 +654,7 @@ copy_batch = on_regex(pattern=f"^{plugin_config.quote_startcmd}batch_copy", **ne
 
 @copy_batch.handle()
 async def copy_batch_handle(event: Event):
+    """处理批量备份指令。"""
     await copy_batch.finish("该功能已废弃，请直接备份 data 文件夹")
 
     # TODO: 实现批量复制语录到指定路径的功能，方便用户备份和迁移语录库
@@ -688,6 +696,7 @@ if not plugin_config.quote_needprefix:
 
     @message_handler.handle()
     async def handle_all_messages(event: GroupMessageEvent):
+        """处理所有消息以实现关键词触发语录的功能。"""
         message_text = event.get_plaintext().strip()
         group_id = str(event.group_id)
 

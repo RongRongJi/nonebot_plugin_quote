@@ -64,7 +64,9 @@ __plugin_meta__ = PluginMetadata(
     },
 )
 
-plugin_config = Config.model_validate(get_driver().config.model_dump())
+driver = get_driver()
+
+plugin_config = Config.model_validate(driver.config.model_dump())
 plugin_config.global_superuser = list(
     {*plugin_config.global_superuser, *plugin_config.superusers}
 )
@@ -702,5 +704,14 @@ async def dump_quote_data():
     定时将内存中的语录数据持久化到磁盘，防止数据丢失。
     """
     logger.info("正在持久化语录数据...")
+    dump_data()
+    logger.info("语录数据持久化完成")
+
+@driver.on_shutdown
+async def shutdown_event():
+    """
+    在插件关闭时执行的函数，用于持久化数据。
+    """
+    logger.info("插件正在关闭，正在持久化语录数据...")
     dump_data()
     logger.info("语录数据持久化完成")

@@ -29,6 +29,8 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.plugin import PluginMetadata
 from nonebot.log import logger
+
+require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 from .task import (
@@ -49,7 +51,6 @@ from .task import (
 from .config import Config, check_font
 from .make_image import generate_quote_image
 
-require("nonebot_plugin_apscheduler")
 
 __plugin_meta__ = PluginMetadata(
     name="群聊语录库",

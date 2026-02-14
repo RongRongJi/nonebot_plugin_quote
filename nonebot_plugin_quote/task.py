@@ -8,7 +8,7 @@ import json
 import jieba
 import httpx
 
-from rapidocr_onnxruntime import RapidOCR
+from rapidocr import RapidOCR
 
 from nonebot import get_driver
 from nonebot.log import logger

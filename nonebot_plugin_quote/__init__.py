@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import pathlib
 from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex
 from nonebot.rule import to_me
@@ -14,14 +13,6 @@ from nonebot.adapters.onebot.v11 import (
     exception,
 )
 from nonebot.typing import T_State
-=======
-from nonebot import on_command, on_keyword, on_startswith, get_driver, on_regex, on_message
-from nonebot.rule import to_me
-from nonebot.adapters import Message
-from nonebot.params import Arg, ArgPlainText, CommandArg
-from nonebot.adapters.onebot.v11 import Bot, Event, Message, MessageEvent, PrivateMessageEvent, MessageSegment, exception, GroupMessageEvent
-from nonebot.typing import T_State  
->>>>>>> upstream
 from nonebot.plugin import PluginMetadata
 import re
 import json
@@ -243,30 +234,12 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
 
     image_path = os.path.abspath(os.path.join(quote_path, os.path.basename(image_path)))
     logger.info(f"图片已保存到 {image_path}")
-<<<<<<< HEAD
     # OCR分词
     # 初始化PaddleOCR
-
-    ocr_content = get_ocr_content(image_path)
-=======
     if plugin_config.quote_enable_ocr:
-        # OCR分词
-        # 初始化PaddleOCR
-        ocr = PaddleOCR(use_angle_cls=True, lang='ch')
-        try:
-            # 使用PaddleOCR进行OCR识别
-            ocr_result = ocr.ocr(image_path, cls=True)
-            # 处理OCR识别结果
-            ocr_content = ''
-            for line in ocr_result:
-                for word in line:
-                    ocr_content += word[1][0] + ' '
-        except Exception as e:
-            ocr_content = ''
-            print(f"OCR识别失败: {e}")
+        ocr_content = get_ocr_content(image_path)
     else:
         ocr_content = ''
->>>>>>> upstream
 
     if "group" in session_id:
         tmpList = session_id.split("_")
@@ -351,16 +324,8 @@ async def record_pool_handle(bot: Bot, event: GroupMessageEvent, state: T_State)
             else:
                 msg = ret.text
 
-<<<<<<< HEAD
-        response = await bot.call_api(
-            "send_group_msg", **{"group_id": int(groupNum), "message": msg}
-        )
-    await record_pool.finish()
-
-=======
         await record_pool.finish(Message(msg))
     
->>>>>>> upstream
 
 record_help = on_keyword({"语录"}, priority=10, rule=to_me())
 
@@ -499,10 +464,6 @@ async def alltag_handle(bot: Bot, event: Event, state: T_State):
 
 addtag = on_regex(pattern=f"^{plugin_config.quote_startcmd}addtag\\ ", **need_at)
 
-<<<<<<< HEAD
-=======
-addtag = on_regex(pattern="^{}addtag ".format(plugin_config.quote_startcmd), **need_at)
->>>>>>> upstream
 
 @addtag.handle()
 async def addtag_handle(bot: Bot, event: Event, state: T_State):
@@ -547,12 +508,8 @@ async def addtag_handle(bot: Bot, event: Event, state: T_State):
     )
 
 
-<<<<<<< HEAD
 deltag = on_regex(pattern=f"^{plugin_config.quote_startcmd}deltag\\ ", **need_at)
 
-=======
-deltag = on_regex(pattern="^{}deltag ".format(plugin_config.quote_startcmd), **need_at)
->>>>>>> upstream
 
 @deltag.handle()
 async def deltag_handle(bot: Bot, event: Event, state: T_State):

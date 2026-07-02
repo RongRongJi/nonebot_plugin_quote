@@ -212,3 +212,6 @@ cover/
 # Translations
 *.mo
 *.pot
+
+.vscode/
+.vscode/*

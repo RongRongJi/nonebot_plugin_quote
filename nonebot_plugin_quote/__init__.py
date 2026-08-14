@@ -739,13 +739,28 @@ gocq_path=/home/xxx/gocq/data/cache'''
 
 if plugin_config.quote_needprefix:
     message_handler = on_message(block=False)
-    
+    quote_filter_pattern = re.compile(r'^{}语录(?=$|\s+\S)'.format(re.escape(plugin_config.quote_startcmd)))
+
     @message_handler.handle()
     async def handle_all_messages(event: GroupMessageEvent):
         message_text = event.get_plaintext().strip()
         groupNum = str(event.group_id)
 
-        ret = query(message_text, groupNum, inverted_index)
+        # 仅"语录"或"语录 关键词"格式的消息触发
+        if not quote_filter_pattern.match(message_text):
+            await message_handler.finish()
+
+        search_info = message_text.replace('{}语录'.format(plugin_config.quote_startcmd), '', 1).strip()
+
+        if search_info == '':
+            # 只发"语录"时随机返回一条
+            if groupNum not in record_dict:
+                await message_handler.finish()
+            idx = random.randint(0, len(record_dict[groupNum]) - 1)
+            msg = MessageSegment.image(file=record_dict[groupNum][idx])
+            await message_handler.finish(Message(msg))
+
+        ret = query(search_info, groupNum, inverted_index)
 
         if ret['status'] == 1:
             msg = MessageSegment.image(file=ret['msg'])

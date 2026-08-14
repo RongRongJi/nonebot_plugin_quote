@@ -298,6 +298,12 @@ nonebot.load_plugins("src/plugins", "nonebot_plugin_quote")
 - 增加了是否需要指令前缀的配置
 - 增加了是否需要OCR识别的配置
 
+### v0.5.1 (2026/8/14)
+
+- 适配了PaddleOCR 3.3.0+ 版本
+- 修复了指令前缀配置问题
+- 感谢新协作者 [Ihajacker](https://github.com/Ihajacker) 的贡献
+
 </details>
 
 ## 🎉 鸣谢

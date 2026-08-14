@@ -737,7 +737,7 @@ gocq_path=/home/xxx/gocq/data/cache'''
         await copy_batch.finish("路径不正确")
     await copy_batch.finish("备份完成")
 
-if plugin_config.quote_needprefix:
+if not plugin_config.quote_needprefix:
     message_handler = on_message(block=False)
     
     @message_handler.handle()

@@ -81,6 +81,18 @@ except Exception as e:
 forward_index = inverted2forward(inverted_index)
 
 
+# 初始化PaddleOCR，兼容不同版本关闭默认mkldnn的参数差异，规避Windows下PIR+oneDNN报错
+# paddlex 在CPU上默认 run_mode="mkldnn"，指定 "paddle" 即走 disable_mkldnn 分支
+def create_ocr():
+    ocr_kwargs = {"use_textline_orientation": True, "lang": "ch"}
+    try:
+        # paddleocr 3.5.0+：通过 engine_config 指定 run_mode 关闭 mkldnn
+        return PaddleOCR(**ocr_kwargs, engine_config={"run_mode": "paddle"})
+    except ValueError:
+        # paddleocr 3.3.x~3.4.x：无 engine_config 参数，通过 enable_mkldnn=False 关闭
+        return PaddleOCR(**ocr_kwargs, enable_mkldnn=False)
+
+
 # 回复信息处理
 async def reply_handle(bot, errMsg, raw_message, groupNum, user_id, listener):
     print(raw_message)
@@ -178,15 +190,12 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     if plugin_config.quote_enable_ocr:
         # OCR分词
         # 初始化PaddleOCR
-        ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+        ocr = create_ocr()
         try:
             # 使用PaddleOCR进行OCR识别
-            ocr_result = ocr.ocr(image_path, cls=True)
+            ocr_result = ocr.predict(image_path)
             # 处理OCR识别结果
-            ocr_content = ''
-            for line in ocr_result:
-                for word in line:
-                    ocr_content += word[1][0] + ' '
+            ocr_content = ' '.join(text for res in ocr_result for text in res['rec_texts'])
         except Exception as e:
             ocr_content = ''
             print(f"OCR识别失败: {e}")
@@ -624,6 +633,9 @@ tags=aaa bbb ccc'''
     total_len = len(image_files)
     idx = 0
 
+    # 循环外初始化OCR，避免每张图重复加载模型
+    ocr = create_ocr()
+
     for (imgid, img) in image_files:
         save_file = '../cache/' + img
         idx += 1
@@ -638,15 +650,17 @@ tags=aaa bbb ccc'''
             # 将PIL Image对象保存到临时路径
             temp_image_path = 'temp_image.jpg'
             image.save(temp_image_path)
-            ocr = PaddleOCR(use_angle_cls=True, lang='ch')
             # 使用PaddleOCR进行OCR识别
-            ocr_result = ocr.ocr(temp_image_path, cls=True)
+            ocr_result = ocr.predict(temp_image_path)
             # 处理OCR识别结果
-            ocr_content = ''
-            for line in ocr_result:
-                for word in line:
-                    ocr_content += word[1][0] + ' '
-            ocr_content = handle_ocr_text(ocr_content)
+            texts = []
+            for res in ocr_result:
+                for poly, text in zip(res['rec_polys'], res['rec_texts']):
+                    texts.append({
+                        'text': text,
+                        'coordinates': [{'x': poly[0][0]}, {'x': poly[1][0]}],
+                    })
+            ocr_content = handle_ocr_text(texts)
 
         except exception.ActionFailed:
             await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
@@ -723,7 +737,7 @@ gocq_path=/home/xxx/gocq/data/cache'''
         await copy_batch.finish("路径不正确")
     await copy_batch.finish("备份完成")
 
-if plugin_config.quote_needprefix:
+if not plugin_config.quote_needprefix:
     message_handler = on_message(block=False)
     
     @message_handler.handle()

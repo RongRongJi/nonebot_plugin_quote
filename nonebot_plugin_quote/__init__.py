@@ -178,15 +178,15 @@ async def save_img_handle(bot: Bot, event: MessageEvent, state: T_State):
     if plugin_config.quote_enable_ocr:
         # OCR分词
         # 初始化PaddleOCR
-        ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+        ocr = PaddleOCR(use_textline_orientation=True, lang='ch', engine_config={"run_mode": "paddle"})  # 关闭默认的mkldnn，规避Windows下PIR+oneDNN报错
         try:
             # 使用PaddleOCR进行OCR识别
-            ocr_result = ocr.ocr(image_path, cls=True)
+            ocr_result = ocr.predict(image_path)
             # 处理OCR识别结果
             ocr_content = ''
-            for line in ocr_result:
-                for word in line:
-                    ocr_content += word[1][0] + ' '
+            for res in ocr_result:
+                for text in res['rec_texts']:
+                    ocr_content += text + ' '
         except Exception as e:
             ocr_content = ''
             print(f"OCR识别失败: {e}")
@@ -638,15 +638,18 @@ tags=aaa bbb ccc'''
             # 将PIL Image对象保存到临时路径
             temp_image_path = 'temp_image.jpg'
             image.save(temp_image_path)
-            ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+            ocr = PaddleOCR(use_textline_orientation=True, lang='ch', engine_config={"run_mode": "paddle"})  # 关闭默认的mkldnn，规避Windows下PIR+oneDNN报错
             # 使用PaddleOCR进行OCR识别
-            ocr_result = ocr.ocr(temp_image_path, cls=True)
+            ocr_result = ocr.predict(temp_image_path)
             # 处理OCR识别结果
-            ocr_content = ''
-            for line in ocr_result:
-                for word in line:
-                    ocr_content += word[1][0] + ' '
-            ocr_content = handle_ocr_text(ocr_content)
+            texts = []
+            for res in ocr_result:
+                for poly, text in zip(res['rec_polys'], res['rec_texts']):
+                    texts.append({
+                        'text': text,
+                        'coordinates': [{'x': poly[0][0]}, {'x': poly[1][0]}],
+                    })
+            ocr_content = handle_ocr_text(texts)
 
         except exception.ActionFailed:
             await bot.send_msg(group_id=int(groupNum), message='该图片ocr失败')
